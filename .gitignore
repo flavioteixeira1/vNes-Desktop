@@ -50,6 +50,10 @@ Thumbs.db
 # Arquivos compilados
 target/
 bin/
+testes/
+Outros/
+src/Compilados
+src/target
 *.class
 *.jar
 *.war
@@ -61,6 +65,7 @@ application.properties
 
 # diversos
 
+my_rom.nes
 Diagrama_tabelas.mermaid
 Diagrama_Tabelas.png
 backupv1.sql
