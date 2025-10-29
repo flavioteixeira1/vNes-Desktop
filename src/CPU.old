@@ -49,7 +49,6 @@ public final class CPU implements Runnable{
 	public int cyclesToHalt;
 	public boolean stopRunning;
 	public boolean crash;
-	private static final long NANOS_PER_FRAME = 1000000000L; // TARGET_FPS; // ~16.666ms em n
 
 
 	// Constructor:
@@ -166,7 +165,7 @@ public final class CPU implements Runnable{
 	}
 
 	public synchronized void endExecution(){
-		//System.out.println("CPU.endExecution() - Solicitando parada...");
+		System.out.println("CPU.endExecution() - Solicitando parada...");
 		stopRunning = true;
 		// Notificar a thread se estiver esperando
     synchronized (this) {
@@ -177,9 +176,9 @@ public final class CPU implements Runnable{
     try {
         Thread.sleep(100);
     } catch (InterruptedException e) {
-       // System.err.println("Interrupção ao parar thread da CPU: " + e.getMessage());
+        System.err.println("Interrupção ao parar thread da CPU: " + e.getMessage());
     }
-   // System.out.println("CPU parada.");
+    System.out.println("CPU parada.");
 	
 		//System.out.println("* Attempting to stop CPU thread.");
 		if(myThread!=null && myThread.isAlive()){
@@ -259,40 +258,10 @@ public final class CPU implements Runnable{
 		boolean asApplet = Globals.appletMode;
 		stopRunning = false;
 
-		 // CONTADOR PARA SINCRONIZAÇÃO DE 60 FPS
-        int cycleCounter = 0;
-        int cyclesPerFrame = 29788; // NTSC ~60 FPS
-		long lastSyncTime = System.nanoTime();
-		long syncInterval = NANOS_PER_FRAME;
-
 		while(true){
 
 
 			if(stopRunning)break;
-
-			// ... (código existente de verificação de IRQ)
-
-            opinf = opdata[mmap.load(REG_PC+1)];
-            cycleCount = (opinf>>24); // ← cycleCount É DEFINIDA AQUI
-            cycleAdd = 0;
-
-
-			 // SINCRONIZAÇÃO COM ÁUDIO A CADA FRAME
-            cycleCounter += cycleCount;
-            if (cycleCounter >= cyclesPerFrame) {
-                //syncWithAudio();
-                cycleCounter = 0;
-                
-                // Pequena pausa para manter 60 FPS
-				/*
-                try {
-                    Thread.sleep(1);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    break;
-                }
-					 */
-            }
 
 			// Check interrupts:
 			if(irqRequested){
@@ -1294,11 +1263,11 @@ public final class CPU implements Runnable{
 					break;
 
 				}
-				
 
 			}// end of switch
-			
-			
+
+			// ----------------------------------------------------------------------------------------------------
+
 			if(palEmu){
 				palCnt++;
 				if(palCnt==5){
@@ -1315,20 +1284,7 @@ public final class CPU implements Runnable{
 			if(emulateSound){
 				papu.clockFrameCounter(cycleCount);
 			}
-
-				 // Pequena pausa para não sobrecarregar a CPU
-				if (cycleCount % 50 == 0) {
-					try {
-						Thread.sleep(0, 1000); // 1 microssegundo
-					} catch (InterruptedException e) {
-						Thread.currentThread().interrupt();
-						break;
-					}
-				}
 			
-
-
-	
 		} // End of run loop.
 
 		// Save registers:
@@ -1472,26 +1428,5 @@ public final class CPU implements Runnable{
 		nes 	= null;
 		mmap 	= null;
     }
-
-    private void syncWithAudio() {
-        // SINCRONIZAÇÃO NÃO-BLOQUEANTE COM ÁUDIO
-        PAPU papu = nes.getPapu();
-        if (papu != null) {
-            int bufferUsage = (papu.getBufferIndex() * 100) / papu.getPapuBufferSize();
-            
-            // Se o buffer estiver muito cheio, pausa mínima
-            if (bufferUsage > 80) {
-                try {
-                    Thread.sleep(1);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
-            }
-        }
-    }
-
-
-
-
 
 }

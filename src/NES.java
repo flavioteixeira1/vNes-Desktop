@@ -64,6 +64,14 @@ public class NES{
 		
 	}
 	
+
+	 public void setRom(ROM rom) {
+        this.rom = rom;
+    }
+	
+
+
+
 	public boolean stateLoad(ByteBuffer buf){
 
 		boolean continueEmulation = false;
@@ -133,22 +141,36 @@ public class NES{
 	}
 	
 	public void startEmulation(){
-		
-		if(Globals.enableSound && !papu.isRunning()){
-			papu.start();
-		}		
-		{
-			if(rom!=null && rom.isValid() && !cpu.isRunning()){
+		System.out.println("NES.startEmulation() - Iniciando emulação...");
+		// INICIALIZAR ÁUDIO APENAS UMA VEZ, no início da emulação
+			if(Globals.enableSound && !papu.isRunning()){
+				System.out.println("Iniciando sistema de áudio para emulação...");
+				papu.start();
+				// Pequena pausa para garantir inicialização
+				try {
+					Thread.sleep(100);
+				} catch (InterruptedException e) {
+					Thread.currentThread().interrupt();
+				}
+			}
+			
+			if(rom != null && rom.isValid() && !cpu.isRunning()){
+				//System.out.println("Iniciando CPU...");
 				cpu.beginExecution();
 				isRunning = true;
+				
+				// Notificar UI que a emulação começou
+				if(gui instanceof UIApp) {
+					((UIApp)gui).startEmulation();
+				}
 			}
-		}	
+			//System.out.println("Emulação iniciada: " + isRunning);	
 	}
 	
 	public void stopEmulation(){
-		System.out.println("NES.stopEmulation() - Parando emulação...");
+		//System.out.println("NES.stopEmulation() - Parando emulação...");
 		if(cpu != null && cpu.isRunning()) {
-        System.out.println("Parando CPU...");
+        //System.out.println("Parando CPU...");
         cpu.endExecution();
         isRunning = false;
         
@@ -161,9 +183,9 @@ public class NES{
     }
 		
 		if(Globals.enableSound && papu.isRunning()){
-			System.out.println("Parando áudio...");
+			//System.out.println("Parando áudio...");
 			papu.stop();
-		}  System.out.println("Emulação parada.");
+		}  //System.out.println("Emulação parada.");
 
 	}
 	
@@ -260,12 +282,12 @@ public class NES{
 	// The ROM file is validated first.
 	public boolean loadRom(String file){
 
-		 System.out.println("=== INICIANDO CARREGAMENTO DA ROM ===");
-    	 System.out.println("Arquivo: " + file);
+		 //System.out.println("=== INICIANDO CARREGAMENTO DA ROM ===");
+    	 //System.out.println("Arquivo: " + file);
 		
 		// Can't load ROM while still running.
 		if(isRunning){
-			System.out.println("Parando emulação atual...");
+			//System.out.println("Parando emulação atual...");
 			stopEmulation();
 		}
 
@@ -281,9 +303,9 @@ public class NES{
 		
 		{
 			// Load ROM file:
-		System.out.println("Criando objeto ROM...");
+		//System.out.println("Criando objeto ROM...");
 		rom = new ROM(this);
-		System.out.println("Carregando arquivo...");
+		//System.out.println("Carregando arquivo...");
 		rom.load(file);
 		if(rom.isValid()){
 
@@ -358,30 +380,39 @@ public class NES{
         joy1.reset();
     }
     
-    System.out.println("Reset completo.");
+    //System.out.println("Reset completo.");
 }
 	
 	
 	// Enable or disable sound playback.
 	public void enableSound(boolean enable){
 		
-		boolean wasRunning = isRunning();
-		if(wasRunning){
-			stopEmulation();
-		}
-		
-		if(enable){
-			papu.start();
-		}else{
-			papu.stop();
-		}
-		
-		//System.out.println("** SOUND ENABLE = "+enable+" **");
-		Globals.enableSound = enable;
-		
-		if(wasRunning){
-			startEmulation();
-		}
+		 // FORÇAR desabilitado se enable for false
+        if (!enable) {
+            if(papu.isRunning()){
+                papu.stop();
+            }
+            Globals.enableSound = false;
+            System.out.println("Áudio FORÇADO: DESABILITADO");
+            return;
+        }
+        
+        boolean wasRunning = isRunning();
+        if(wasRunning){
+            stopEmulation();
+        }
+        
+        if(enable){
+            papu.start();
+        }else{
+            papu.stop();
+        }
+        
+        Globals.enableSound = enable;
+        
+        if(wasRunning){
+            startEmulation();
+        }
 		
 	}
 	

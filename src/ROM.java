@@ -287,22 +287,6 @@ public class ROM{
 				}
 			}
 			
-			/*
-			tileIndex = (address+i)>>4;
-			leftOver = (address+i) % 16;
-			if(leftOver<8){
-				ptTile[tileIndex].setScanline(leftOver,value[offset+i],ppuMem.load(address+8+i));
-			}else{
-				ptTile[tileIndex].setScanline(leftOver-8,ppuMem.load(address-8+i),value[offset+i]);
-			}
-			*/
-			
-		/*}catch(Exception e){
-			//System.out.println("Error reading ROM & VROM banks. Corrupt file?");
-			valid = false;
-			return;
-		}*/
-
         // Record CRC32 for Cartridge
 		java.util.zip.CRC32 crc = new java.util.zip.CRC32();
 		byte[] tempArray = new byte[rom.length + vrom.length];

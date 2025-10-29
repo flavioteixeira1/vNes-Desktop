@@ -139,38 +139,115 @@ public final class PAPU{
 		// not yet.
 	}
 
-	public synchronized void start(){
 
+	/*
+	public synchronized void start(){
+		System.out.println("[PAPU] Iniciando sistema de áudio...");
 		//System.out.println("* Starting PAPU lines.");
 		if(line!=null && line.isActive()){
 			//System.out.println("* Already running.");
+			//System.out.println("[PAPU] Linha de áudio já está ativa");
 			return;
 		}
 
 		bufferIndex = 0;
 		Mixer.Info[] mixerInfo = AudioSystem.getMixerInfo();
+		System.out.println("[PAPU] Mixers disponíveis (" + mixerInfo.length + "):");
 		
 		if(mixerInfo==null || mixerInfo.length==0){
 			//System.out.println("No audio mixer available, sound disabled.");
+			System.out.println("[PAPU] ERRO: Nenhum mixer de áudio disponível. Som desabilitado.");
 			Globals.enableSound = false;
 			return;
 		}
-		
+				System.out.println("[PAPU] Mixers disponíveis: " + mixerInfo.length);
+				for(int i = 0; i < mixerInfo.length; i++) {
+					System.out.println("[PAPU] Mixer " + i + ": " + mixerInfo[i].getName());
+				}
+
+				try {
+					mixer = AudioSystem.getMixer(mixerInfo[1]);
+					System.out.println("[PAPU] Mixer selecionado: " + mixerInfo[1].getName());
+				} catch (Exception e) {
+					System.out.println("[PAPU] ERRO ao selecionar mixer 1, tentando mixer 0");
+					try {
+						mixer = AudioSystem.getMixer(mixerInfo[0]);
+					} catch (Exception e2) {
+						System.out.println("[PAPU] ERRO: Não foi possível acessar nenhum mixer");
+						Globals.enableSound = false;
+						return;
+					}
+				}
+
 		mixer = AudioSystem.getMixer(mixerInfo[1]);
-
 		AudioFormat audioFormat = new AudioFormat(sampleRate,16,(stereo?2:1),true,false);
+		System.out.println("[PAPU] Formato de áudio: " + audioFormat);
 		DataLine.Info info = new DataLine.Info(SourceDataLine.class,audioFormat,sampleRate);
-
 		try{
-
+			System.out.println("[PAPU] Tentando abrir linha de áudio...");
 			line = (SourceDataLine)AudioSystem.getLine(info);
 			line.open(audioFormat);
 			line.start();
+			System.out.println("[PAPU] Linha de áudio aberta com sucesso!");
+            System.out.println("[PAPU] Buffer size: " + line.getBufferSize());
+            System.out.println("[PAPU] Format: " + line.getFormat());
 
 		}catch(Exception e){
 			//System.out.println("Couldn't get sound lines.");
+			System.out.println("[PAPU] ERRO: Não foi possível obter linhas de som: " + e.getMessage());
+            e.printStackTrace();
 		}
 
+	}
+	 */
+	//Aqui
+
+	public synchronized void start(){
+				//System.out.println("[PAPU] Iniciando sistema de áudio...");
+				
+				Mixer.Info[] mixerInfo = AudioSystem.getMixerInfo();
+				System.out.println("[PAPU] Mixers disponíveis (" + mixerInfo.length + "):");
+				
+				// Priorizar mixers específicos
+				int[] preferredMixers = {4, 0, 5, 1}; // default, Intel, NVidia
+				//int[] preferredMixers = {5}; // 
+				
+				for(int i : preferredMixers) {
+					if(i < mixerInfo.length) {
+						try {
+							System.out.println("[PAPU] Tentando mixer preferencial [" + i + "]: " + mixerInfo[i].getName());
+							mixer = AudioSystem.getMixer(mixerInfo[i]);
+							
+							AudioFormat audioFormat = new AudioFormat(sampleRate,16,(stereo?2:1),true,false);
+							DataLine.Info info = new DataLine.Info(SourceDataLine.class,audioFormat,sampleRate);
+							
+							line = (SourceDataLine)AudioSystem.getLine(info);
+							line.open(audioFormat);
+							line.start();
+							
+							System.out.println("[PAPU] SUCESSO com mixer: " + mixerInfo[i].getName());
+							System.out.println("[PAPU] Buffer: " + line.getBufferSize() + ", Format: " + line.getFormat());
+							break;
+							
+						} catch (Exception e) {
+							System.out.println("[PAPU] Mixer " + i + " falhou: " + e.getMessage());
+						}
+					}
+				}
+				
+				if(line == null) {
+					System.out.println("[PAPU] ERRO: Nenhum mixer funcionou!");
+					Globals.enableSound = false;
+				}
+	}
+
+
+	public void forceBufferFlush() {
+		if(line != null && line.available() < line.getBufferSize() / 2) {
+			System.out.println("[PAPU] Forçando flush do buffer...");
+			line.drain(); // Espera até que todo o buffer seja reproduzido
+			System.out.println("[PAPU] Buffer flushed! Disponível: " + line.available());
+		}
 	}
 
 	public NES getNes(){
@@ -327,6 +404,15 @@ public final class PAPU{
 				return;
 			}
 		}
+
+		// Log a cada 2000000 ciclos para não poluir
+		/* 
+        if((masterFrameCounter % 2000000) == 0) {
+            System.out.println("[PAPU] Clocking frame counter. nCycles: " + nCycles + 
+                             ", sampleTimer: " + sampleTimer + 
+                             ", bufferIndex: " + bufferIndex);
+        }
+		*/
 
 		// Don't process ticks beyond next sampling:
 		nCycles += extraCycles;
@@ -579,6 +665,15 @@ public final class PAPU{
 	// writes to buffer and (if enabled) file.
 	public void sample(){
 
+			// Log a cada 10000000 amostras
+			/*
+			if((sampleCount % 10000000) == 0) {
+				System.out.println("[PAPU] Sampling - accCount: " + accCount + 
+								", bufferIndex: " + bufferIndex +
+								", line available: " + (line != null ? line.available() : -1));
+			}
+								 */
+
 		if(accCount>0){
 
 			smpSquare1 	<<= 4;
@@ -683,24 +778,52 @@ public final class PAPU{
 
 
 	// Writes the sound buffer to the output line:
+	private int writeCount = 0;
+	
 	public void writeBuffer(){
+			if(line==null) return;
+			bufferIndex -= (bufferIndex%(stereo?4:2));
+			if(bufferIndex > 0) {
+					// Log mais informativo
+					/*
+					if((writeCount++ % 50) == 0) {
+						int used = line.getBufferSize() - line.available();
+						System.out.println("[PAPU] Buffer: " + bufferIndex + " bytes escritos" +
+										" | Usado: " + used + "/" + line.getBufferSize() +
+										" (" + (used*100/line.getBufferSize()) + "%)");
+					}
+					 */
+					
+					try {
+						line.write(sampleBuffer,0,bufferIndex);
+						
+						// Forçar flush periódico
+						if(writeCount % 400 == 0) {
+							forceBufferFlush();
+						}
+						
+					} catch (Exception e) {
+						System.out.println("[PAPU] ERRO: " + e.getMessage());
+					}
+				}
+				
+				bufferIndex = 0;
+			}
 
-		if(line==null)return;
-		bufferIndex -= (bufferIndex%(stereo?4:2));
-		line.write(sampleBuffer,0,bufferIndex);
-		bufferIndex = 0;
 
-	}
 
 	public void stop(){
-
+		System.out.println("[PAPU] Parando sistema de áudio...");
 		if(line==null){
 			// No line to close. Probably lack of sound card.
+			 System.out.println("[PAPU] Nenhuma linha para fechar");
 			return;
 		}
 
 		if(line!=null && line.isOpen() && line.isActive()){
+			System.out.println("[PAPU] Fechando linha de áudio...");
 			line.close();
+			System.out.println("[PAPU] Linha de áudio fechada");
 		}
 		
 		// Lose line:
@@ -1025,6 +1148,11 @@ public final class PAPU{
 		this.dcValue = dacRange/2;
 
 	}
+
+	public int getBufferIndex() {
+        return bufferIndex;
+    }
+
 
 	public void destroy(){
 

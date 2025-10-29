@@ -19,7 +19,8 @@ public class RockmanForm extends Applet implements Runnable, ActionListener {
     int samplerate;
     int romSize;
     int progress;
-    UIApp gui;
+    //UIApp gui;
+    AppletUIApp2 gui;
     NES jogo;
     ScreenView panelScreen;
     String rom = "";
@@ -34,6 +35,7 @@ public class RockmanForm extends Applet implements Runnable, ActionListener {
     private JMenu fileMenu;
     private JMenuItem loadRomItem;
     private JFrame parentFrame;
+
 
     public void setParentFrame(JFrame frame) {
         this.parentFrame = frame;
@@ -134,6 +136,8 @@ public class RockmanForm extends Applet implements Runnable, ActionListener {
 
     public void init() {
         System.gc();
+        
+        // CONFIGURAÇÕES OTIMIZADAS PARA 60 FPS COM ÁUDIO
         this.scale = true;
         this.timeemulation = true;
         this.fps = true;
@@ -141,26 +145,44 @@ public class RockmanForm extends Applet implements Runnable, ActionListener {
         this.nicesound = true;
         this.sound = true;
 
+     //   System.out.println("=== INICIALIZANDO SISTEMA ===");
+     //   System.out.println("Áudio: " + (sound ? "HABILITADO" : "DESABILITADO"));
+     //   System.out.println("FPS alvo: 60");
+        
+        // DIAGNÓSTICO DE ÁUDIO
+      //  System.out.println("=== INICIALIZANDO SISTEMA DE ÁUDIO ===");
+     //   AudioDiagnostic audioDiagnostic = new AudioDiagnostic();
+      //  audioDiagnostic.checkAudioSystem();
+        
         // Criar welcome.nes se não existir
         File welcomeROM = new File("welcome.nes");
         if (!welcomeROM.exists()) {
             WelcomeROMCreator.createWelcomeROM();
         }
         
-        gui = new UIApp(this);
+        //gui = new UIApp(this);
+        gui = new AppletUIApp2(this);
         gui.init(false);
         
         Globals.appletMode = true;
         Globals.memoryFlushValue = 0x00;
+        Globals.preferredFrameRate = 60; // FORÇAR 60 FPS
+        Globals.frameTime = 1000000 / 60;
+        Globals.enableSound = true; // ← DESABILITAR GLOBALMENTE
         
         jogo = gui.getNES();
         jogo.enableSound(sound);
+        jogo.setFramerate(60); // CONFIGURAR 60 FPS
         jogo.reset();
 
-        // Inicialmente mostrar tela de boas-vindas
         showWelcomeScreen = true;
         romLoaded = false;
+        
+       // System.out.println("✅ Sistema inicializado - 60 FPS com áudio");
     }
+
+
+
 
     public void setRomPath(String romPath) {
         this.rom = romPath;
@@ -209,7 +231,7 @@ public class RockmanForm extends Applet implements Runnable, ActionListener {
         
         // Se não há ROM definida, mostrar tela de boas-vindas
         if (rom == null || rom.trim().isEmpty()) {
-            System.out.println("Nenhuma ROM especificada, mostrando tela de boas-vindas");
+           // System.out.println("Nenhuma ROM especificada, mostrando tela de boas-vindas");
             showWelcomeScreen = true;
             romLoaded = false;
             repaint();
@@ -218,7 +240,7 @@ public class RockmanForm extends Applet implements Runnable, ActionListener {
         
         try {
             // Load ROM file:
-            System.out.println("Carregando ROM: " + rom);
+           // System.out.println("Carregando ROM: " + rom);
             
             // Verificar se o arquivo existe
             java.io.File romFile = new java.io.File(rom);
@@ -231,13 +253,13 @@ public class RockmanForm extends Applet implements Runnable, ActionListener {
                 return;
             }
             
-            System.out.println("Arquivo existe, tamanho: " + romFile.length() + " bytes");
+           // System.out.println("Arquivo existe, tamanho: " + romFile.length() + " bytes");
 
             // Carregar a ROM
             boolean loaded = jogo.loadRom(rom);
             
             if (loaded && jogo.rom.isValid()) {
-                System.out.println("ROM carregada com sucesso, adicionando tela...");
+                //System.out.println("ROM carregada com sucesso, adicionando tela...");
                 showWelcomeScreen = false;
                 romLoaded = true;
                         
@@ -256,7 +278,7 @@ public class RockmanForm extends Applet implements Runnable, ActionListener {
                 jogo.ppu.showSoundBuffer = showsoundbuffer;
                 
                 // Start emulation:
-                System.out.println("Iniciando execução da CPU...");
+                //System.out.println("Iniciando execução da CPU...");
                 jogo.startEmulation();
                 System.out.println("Emulação iniciada!");
                 
@@ -277,10 +299,6 @@ public class RockmanForm extends Applet implements Runnable, ActionListener {
             repaint();
         }
     }
-
-    // REMOVA este método - ele está causando conflito!
-    // public void paint(Graphics g, String s) {
-    // }
 
     public void paint(Graphics g) {
         if (showWelcomeScreen) {
@@ -306,7 +324,7 @@ public class RockmanForm extends Applet implements Runnable, ActionListener {
         if (scrw == 0) scrw = 512;
         if (scrh == 0) scrh = 480;
         
-        System.out.println("Desenhando tela de boas-vindas: " + scrw + "x" + scrh);
+       // System.out.println("Desenhando tela de boas-vindas: " + scrw + "x" + scrh);
         
         // Fill background with dark blue
         g.setColor(new Color(10, 20, 40));
@@ -337,23 +355,29 @@ public class RockmanForm extends Applet implements Runnable, ActionListener {
         g.setColor(Color.CYAN);
         String line1 = "Para começar, use: File → Load ROM";
         String line2 = "Controles: Setas (Direção) | Z (A) | X (B) | Ctrl (Select) | Enter (Start)";
-        
+        String line3 = "Versão Desktop por Flávio Augusto Teixeira - flavioteixeira1@gmail.com";
         int line1Width = g.getFontMetrics().stringWidth(line1);
         int line2Width = g.getFontMetrics().stringWidth(line2);
+        int line3Width = g.getFontMetrics().stringWidth(line3);
         
         g.drawString(line1, scrw/2 - line1Width/2, scrh/2 + 10);
-        g.drawString(line2, scrw/2 - line2Width/2, scrh/2 + 35);
+        g.drawString(line2, scrw/2 - line2Width/2, scrh/2 + 30);
+        g.drawString(line3, scrw/2 - line3Width/2, scrh/2 + 50);
+        
         
         // Dicas
         g.setColor(Color.ORANGE);
-        String tip1 = "Dica: A maioria dos jogos NES funciona bem com este emulador";
-        String tip2 = "Formatos suportados: .nes, .nez";
+        String tip1 = "Agradecimentos a Jamie Sanders por elaborar o vNES original";
+        String tip2 = "Agradecimentos a Ben Firshman por manter o repositório vNES no github";
+        String tip3 = "Formatos suportados: .nes, .nez";
         
         int tip1Width = g.getFontMetrics().stringWidth(tip1);
         int tip2Width = g.getFontMetrics().stringWidth(tip2);
-        
-        g.drawString(tip1, scrw/2 - tip1Width/2, scrh/2 + 70);
+        int tip3Width = g.getFontMetrics().stringWidth(tip3);
+
+        g.drawString(tip1, scrw/2 - tip1Width/2, scrh/2 + 74);
         g.drawString(tip2, scrw/2 - tip2Width/2, scrh/2 + 90);
+        g.drawString(tip3, scrw/2 - tip3Width/2, scrh/2 + 110);
         
         // Rodapé
         g.setFont(smallFont);
@@ -486,6 +510,16 @@ public class RockmanForm extends Applet implements Runnable, ActionListener {
 		
 	}
 
+    private void printDiagnostics() {
+        System.out.println("=== DIAGNÓSTICO DO SISTEMA ===");
+        //System.out.println("FPS: " + (gui instanceof UIApp ? "UIApp" : "Unknown"));
+        System.out.println("FPS: " + (gui instanceof AppletUIApp2 ? "AppletUIApp" : "Unknown"));
+        System.out.println("Áudio habilitado: " + Globals.enableSound);
+        System.out.println("ROM carregada: " + romLoaded);
+        System.out.println("NES running: " + (jogo != null && jogo.isRunning()));
+        System.out.println("PAPU running: " + (jogo != null && jogo.getPapu() != null && jogo.getPapu().isRunning()));
+        System.out.println("==============================");
+    }
 
 
 }

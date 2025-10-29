@@ -2,9 +2,9 @@ import java.awt.event.*;
 
 public class AppletUIApp implements UI{
 	
-	
-        RockmanApp applet;
-        NES nes;
+	//RockmanForm app;
+    RockmanApp applet;
+    NES nes;
 	KbInputHandler kbJoy1;
 	KbInputHandler kbJoy2;
 	ScreenView vScreen;
@@ -17,8 +17,7 @@ public class AppletUIApp implements UI{
 	
 		timer = new HiResTimer();
 		this.applet = applet;
-		nes = new NES(this);
-                
+		nes = new NES(this);           
 	
 	}
 	
@@ -59,7 +58,7 @@ public class AppletUIApp implements UI{
 	public void imageReady(boolean skipFrame){
 		
 		// Sound stuff:
-		int tmp = nes.getPapu().bufferIndex;
+		int tmp = nes.getPapu().getBufferIndex();
 		if(Globals.enableSound && Globals.timeEmulation && tmp>0){
 			
 			int min_avail = nes.getPapu().line.getBufferSize()-4*tmp;

@@ -1,10 +1,10 @@
 import java.awt.event.*;
 
-public class AppletUI1 implements UI{
+public class AppletUIApp2 implements UI{
 	
-	//vNES applet;
-        Rockman applet;
-	NES nes;
+	RockmanForm jogo;
+    //RockmanApp applet;
+    NES nes;
 	KbInputHandler kbJoy1;
 	KbInputHandler kbJoy2;
 	ScreenView vScreen;
@@ -12,21 +12,19 @@ public class AppletUI1 implements UI{
 	
 	long t1,t2;
 	int sleepTime;
-        
 	
-	public AppletUI1(Rockman applet){
+	public AppletUIApp2(RockmanForm jogo){
 	
 		timer = new HiResTimer();
-		this.applet = applet;
-		nes = new NES(this);
+		this.jogo = jogo;
+		nes = new NES(this);           
 	
 	}
-       
 	
 	public void init(boolean showGui){
 		
 		vScreen = new ScreenView(nes,256,240);
-		vScreen.setBgColor(applet.bgColor.getRGB());
+		vScreen.setBgColor(jogo.bgColor.getRGB());
 		vScreen.init();
 		vScreen.setNotifyImageReady(true);
 		
@@ -88,13 +86,13 @@ public class AppletUI1 implements UI{
 	}
 	
 	public int getRomFileSize(){
-		return applet.romSize;
+		return jogo.romSize;
 	}
 	
 	public void showLoadProgress(int percentComplete){
 		
 		// Show ROM load progress:
-		applet.showLoadProgress(percentComplete);
+		jogo.showLoadProgress(percentComplete);
 		
 		// Sleep a bit:
 		timer.sleepMicros(20*1000);
@@ -108,7 +106,7 @@ public class AppletUI1 implements UI{
 		if(kbJoy2!=null)kbJoy2.destroy();
 		
 		nes = null;
-		applet = null;
+		jogo = null;
 		kbJoy1 = null;
 		kbJoy2 = null;
 		vScreen = null;
@@ -152,10 +150,10 @@ public class AppletUI1 implements UI{
 		return new java.awt.Point(0,0);
 	}
 	public int getWidth(){
-		return applet.getWidth();
+		return jogo.getWidth();
 	}
 	public int getHeight(){
-		return applet.getHeight();
+		return jogo.getHeight();
 	}
 	public void println(String s){}
 	public void showErrorMsg(String msg){System.out.println(msg);}
