@@ -11,7 +11,30 @@ public class ChannelDM implements PapuChannel{
 	boolean isEnabled;
 	boolean hasSample;
 	boolean irqGenerated=false;
+	boolean lengthCounterEnable;
+	boolean sweepActive;
+	boolean envDecayDisable;
+	boolean envDecayLoopEnable;
+	boolean envReset;
+	boolean sweepCarry;
+	boolean updateSweepPeriod;
 	
+	int sampleValue;
+	int progTimerCount;
+	int progTimerMax;
+	int lengthCounter;
+	int squareCounter;
+	int sweepCounter;
+	int sweepCounterMax;
+	int sweepMode;
+	int sweepShiftAmount;
+	int envDecayRate;
+	int envDecayCounter;
+	int envVolume;
+	int masterVolume;
+	int dutyMode;
+	int sweepResult;
+	int vol;
 	int playMode;
 	int dmaFrequency;
 	int dmaCounter;
@@ -73,6 +96,64 @@ public class ChannelDM implements PapuChannel{
 		}
 		
 	}
+
+
+	public void stateSave(ByteBuffer buf) {
+			buf.putBoolean(isEnabled);
+			buf.putBoolean(lengthCounterEnable);
+			buf.putBoolean(sweepActive);
+			buf.putBoolean(envDecayDisable);
+			buf.putBoolean(envDecayLoopEnable);
+			buf.putBoolean(envReset);
+			buf.putBoolean(sweepCarry);
+			buf.putBoolean(updateSweepPeriod);
+			
+			buf.putInt(progTimerCount);
+			buf.putInt(progTimerMax);
+			buf.putInt(lengthCounter);
+			buf.putInt(squareCounter);
+			buf.putInt(sweepCounter);
+			buf.putInt(sweepCounterMax);
+			buf.putInt(sweepMode);
+			buf.putInt(sweepShiftAmount);
+			buf.putInt(envDecayRate);
+			buf.putInt(envDecayCounter);
+			buf.putInt(envVolume);
+			buf.putInt(masterVolume);
+			buf.putInt(dutyMode);
+			buf.putInt(sweepResult);
+			buf.putInt(sampleValue);
+			buf.putInt(vol);
+		}
+
+	public void stateLoad(ByteBuffer buf) {
+				isEnabled = buf.readBoolean();
+				lengthCounterEnable = buf.readBoolean();
+				sweepActive = buf.readBoolean();
+				envDecayDisable = buf.readBoolean();
+				envDecayLoopEnable = buf.readBoolean();
+				envReset = buf.readBoolean();
+				sweepCarry = buf.readBoolean();
+				updateSweepPeriod = buf.readBoolean();
+				
+				progTimerCount = buf.readInt();
+				progTimerMax = buf.readInt();
+				lengthCounter = buf.readInt();
+				squareCounter = buf.readInt();
+				sweepCounter = buf.readInt();
+				sweepCounterMax = buf.readInt();
+				sweepMode = buf.readInt();
+				sweepShiftAmount = buf.readInt();
+				envDecayRate = buf.readInt();
+				envDecayCounter = buf.readInt();
+				envVolume = buf.readInt();
+				masterVolume = buf.readInt();
+				dutyMode = buf.readInt();
+				sweepResult = buf.readInt();
+				sampleValue = buf.readInt();
+				vol = buf.readInt();
+			}
+
 	
 	private void endOfSample(){
 		

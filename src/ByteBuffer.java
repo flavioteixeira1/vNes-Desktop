@@ -44,7 +44,7 @@ public class ByteBuffer{
 	}
 	
 	
-	
+	/* 
 	public void setExpandable(boolean exp){
 		expandable = exp;
 	}
@@ -176,6 +176,9 @@ public class ByteBuffer{
 			}
 		}
 	}
+
+	*/
+
 	
 	public boolean putBoolean(boolean b){
 		boolean ret = putBoolean(b,curPos);
@@ -264,6 +267,7 @@ public class ByteBuffer{
 		}
 	}
 	
+	/*
 	public boolean putString(String var){
 		boolean ret = putString(var,curPos);
 		if(ret){
@@ -288,6 +292,7 @@ public class ByteBuffer{
 			return false;
 		}
 	}
+	 */
 	
 	public boolean putChar(char var){
 		boolean ret = putChar(var,curPos);
@@ -515,6 +520,8 @@ public class ByteBuffer{
 			throw new ArrayIndexOutOfBoundsException();
 		}
 	}
+
+	/* 
 	
 	public String readString(int length) throws ArrayIndexOutOfBoundsException{
 		if(length > 0){
@@ -539,6 +546,7 @@ public class ByteBuffer{
 		}
 	}
 	
+	
 	public String readStringWithShortLength() throws ArrayIndexOutOfBoundsException{
 		String ret = readStringWithShortLength(curPos);
 		move(ret.length()*2+2);
@@ -558,6 +566,7 @@ public class ByteBuffer{
 			throw new ArrayIndexOutOfBoundsException();
 		}
 	}
+		*/
 	
 	public String readStringAscii(int length) throws ArrayIndexOutOfBoundsException{
 		String ret = readStringAscii(curPos,length);
@@ -705,6 +714,256 @@ public class ByteBuffer{
 		return null;
 		
 	}
+
+	 public boolean putString(String str) {
+			if (str == null) {
+				return putShort((short)0);
+			}
+			boolean success = putShort((short)str.length());
+			if (success) {
+				for (int i = 0; i < str.length(); i++) {
+					if (!putByte((short)str.charAt(i))) {
+						return false;
+					}
+				}
+			}
+			return success;
+   		 }
+		
+		 /**
+     * Lê uma string com comprimento variável (precedida por um short indicando o tamanho)
+     */
+	 public String readString() {
+        short length = readShort();
+        if (length <= 0) {
+            return "";
+        }
+		 StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < length; i++) {
+            sb.append((char)readByte());
+        }
+        return sb.toString();
+    }
+
+	  /**
+     * Salva um valor long (8 bytes)
+     */
+
+	  public boolean putLong(long var) {
+        boolean ret = putLong(var, curPos);
+        if (ret) {
+            move(8);
+        }
+        return ret;
+    }
+
+	/**
+     * Salva um valor long em uma posição específica
+     */
+
+	public boolean putLong(long var, int pos) {
+        if (inRange(pos, 8)) {
+            if (this.byteOrder == BO_BIG_ENDIAN) {
+                buf[pos+0] = (short)((var >> 56) & 255);
+                buf[pos+1] = (short)((var >> 48) & 255);
+                buf[pos+2] = (short)((var >> 40) & 255);
+                buf[pos+3] = (short)((var >> 32) & 255);
+                buf[pos+4] = (short)((var >> 24) & 255);
+                buf[pos+5] = (short)((var >> 16) & 255);
+                buf[pos+6] = (short)((var >> 8) & 255);
+                buf[pos+7] = (short)((var) & 255);
+            } else {
+                buf[pos+7] = (short)((var >> 56) & 255);
+                buf[pos+6] = (short)((var >> 48) & 255);
+                buf[pos+5] = (short)((var >> 40) & 255);
+                buf[pos+4] = (short)((var >> 32) & 255);
+                buf[pos+3] = (short)((var >> 24) & 255);
+                buf[pos+2] = (short)((var >> 16) & 255);
+                buf[pos+1] = (short)((var >> 8) & 255);
+                buf[pos+0] = (short)((var) & 255);
+            }
+            return true;
+        } else {
+            error();
+            return false;
+        }
+    }
+
+	  /**
+     * Lê um valor long
+     */
+
+	 public long readLong() {
+        long ret = readLong(curPos);
+        move(8);
+        return ret;
+    }
+
+	 /**
+     * Lê um valor long de uma posição específica
+     */
+
+
+	 public long readLong(int pos) {
+        long ret = 0;
+        if (inRange(pos, 8)) {
+            if (this.byteOrder == BO_BIG_ENDIAN) {
+                ret |= ((long)buf[pos+0] << 56);
+                ret |= ((long)buf[pos+1] << 48);
+                ret |= ((long)buf[pos+2] << 40);
+                ret |= ((long)buf[pos+3] << 32);
+                ret |= ((long)buf[pos+4] << 24);
+                ret |= ((long)buf[pos+5] << 16);
+                ret |= ((long)buf[pos+6] << 8);
+                ret |= ((long)buf[pos+7]);
+            } else {
+                ret |= ((long)buf[pos+7] << 56);
+                ret |= ((long)buf[pos+6] << 48);
+                ret |= ((long)buf[pos+5] << 40);
+                ret |= ((long)buf[pos+4] << 32);
+                ret |= ((long)buf[pos+3] << 24);
+                ret |= ((long)buf[pos+2] << 16);
+                ret |= ((long)buf[pos+1] << 8);
+                ret |= ((long)buf[pos+0]);
+            }
+            return ret;
+        } else {
+            error();
+            throw new ArrayIndexOutOfBoundsException();
+        }
+    }
+
+	  // Métodos auxiliares para save states
+
+		public void setExpandable(boolean exp){
+        expandable = exp;
+    }
+    
+    public void setExpandBy(int expBy){
+        if(expBy > 1024){
+            this.expandBy = expBy;
+        }
+    }
+    
+    public void setByteOrder(int byteOrder){
+        if(byteOrder>=0 && byteOrder<2){
+            this.byteOrder = byteOrder;
+        }
+    }
+    
+    public byte[] getBytes(){
+        byte[] ret = new byte[buf.length];
+        for(int i=0;i<buf.length;i++){
+            ret[i] = (byte)buf[i];
+        }
+        return ret;
+    }
+    
+    public int getSize(){
+        return this.size;
+    }
+    
+    public int getPos(){
+        return curPos;
+    }
+    
+    private void error(){
+        hasBeenErrors = true;
+        //System.out.println("Not in range!");
+    }
+    
+    public boolean hasHadErrors(){
+        return hasBeenErrors;
+    }
+    
+    public void clear(){
+        for(int i=0;i<buf.length;i++){
+            buf[i] = 0;
+        }
+        curPos=0;
+    }
+    
+    public void fill(byte value){
+        for(int i=0;i<size;i++){
+            buf[i]=value;
+        }
+    }
+    
+    public boolean fillRange(int start, int length, byte value){
+        if(inRange(start,length)){
+            for(int i=start;i<(start+length);i++){
+                buf[i] = value;
+            }
+            return true;
+        }else{
+            error();
+            return false;
+        }
+    }
+    
+    public void resize(int length){
+        short[] newbuf = new short[length];
+        System.arraycopy(buf,0,newbuf,0,Math.min(length,size));
+        buf = newbuf;
+        size = length;
+    }
+    
+    public void resizeToCurrentPos(){
+        resize(curPos);
+    }
+    
+    public void expand(){
+        expand(expandBy);
+    }
+    
+    public void expand(int byHowMuch){
+        resize(size+byHowMuch);
+    }
+    
+    public void goTo(int position){
+        if(inRange(position)){
+            curPos = position;
+        }else{
+            error();
+        }
+    }
+    
+    public void move(int howFar){
+        curPos += howFar;
+        if(!inRange(curPos)){
+            curPos = size-1;
+        }
+    }
+    
+    public boolean inRange(int pos){
+        if(pos >= 0 && pos < size){
+            return true;
+        }else{
+            if(expandable){
+                expand(Math.max(pos+1-size,expandBy));
+                return true;
+            }else{
+                return false;
+            }
+        }
+    }
+    
+    public boolean inRange(int pos, int length){
+        if(pos >= 0 && pos+(length-1) < size){
+            return true;
+        }else{
+            if(expandable){
+                expand(Math.max(pos+length-size,expandBy));
+                return true;
+            }else{
+                return false;
+            }
+        }
+    }
+	  
+
+
+	
 	
 	
 }

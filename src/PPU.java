@@ -154,9 +154,20 @@ public class PPU{
 
 	public PPU(NES nes){
 		this.nes = nes;
+		// INICIALIZAR BUFFER NO CONSTRUTOR
+    	this.buffer = new int[256 * 240];
+		// Inicializar outras variáveis
+   		 this.curX = 0;
+   		// this.curY = 0;
 	}
 
 	public void init(){
+		System.out.println("PPU.init() - Inicializando PPU");
+		// Inicializar o buffer se estiver null
+   		 if (buffer == null) {
+        System.out.println("PPU.init() - Criando novo buffer");
+        buffer = new int[256 * 240];
+    	}
 
 		// Get the memory:
 		ppuMem = nes.getPpuMemory();
@@ -197,17 +208,29 @@ public class PPU{
 		for(int i=0;i<0x8000;i++){
 			vramMirrorTable[i] = i;
 		}
-
 		lastRenderedScanline = -1;
 		curX = 0;
-
+   		scanline = 0;  
+   		 // Resetar registradores
+    	vramAddress = 0;
+   		vramTmpAddress = 0;
+    	vramBufferedReadValue = 0;
 		// Initialize old frame buffer:
 		for(int i=0;i<oldFrame.length;i++){
 			oldFrame[i]=-1;
 		}
-
+		System.out.println("PPU.init() - Inicialização completa");
 	}
 
+
+	public void diagnose() {
+			System.out.println("=== DIAGNÓSTICO PPU ===");
+			System.out.println("Buffer: " + (buffer != null ? "OK" : "NULL"));
+			System.out.println("NES: " + (nes != null ? "OK" : "NULL"));
+			System.out.println("GUI: " + (nes != null && nes.getGui() != null ? "OK" : "NULL"));
+			System.out.println("Buffer length: " + (buffer != null ? buffer.length : "N/A"));
+			System.out.println("=========================");
+	}
 
 	// Sets Nametable mirroring.
 	public void setMirroring(int mirroring){
@@ -1036,6 +1059,17 @@ public class PPU{
 	}
 
 	private void renderFramePartially(int[] buffer, int startScan, int scanCount){
+		// VERIFICAÇÃO CRÍTICA DE SEGURANÇA
+		if (buffer == null) {
+			System.err.println("PPU.renderFramePartially() - Buffer não inicializado! Inicializando agora...");
+			buffer = new int[256 * 240];
+		}
+		
+		if (nes == null || nes.getGui() == null) {
+			System.err.println("PPU.renderFramePartially() - NES ou GUI não inicializados");
+			return;
+		}
+
 
 		if(f_spVisibility == 1 && !Globals.disableSprites){
 			renderSpritesPartially(startScan,scanCount,true);
@@ -1809,10 +1843,34 @@ public class PPU{
 				nameTable[i].stateLoad(buf);
 			}
 
+			 // Paletas
+			for(int i = 0; i < 16; i++) {
+				imgPalette[i] = buf.readByte();
+			}
+			for(int i = 0; i < 16; i++) {
+				sprPalette[i] = buf.readByte();
+			}
+
+
+			 // Sprite data
+			for(int i = 0; i < 64; i++) {
+				sprX[i] = buf.readByte();
+				sprY[i] = buf.readByte();
+				sprTile[i] = buf.readByte();
+				sprCol[i] = buf.readByte();
+				vertFlip[i] = buf.readBoolean();
+				horiFlip[i] = buf.readBoolean();
+				bgPriority[i] = buf.readBoolean();
+			}
+
+
 			// Pattern data:
 			for(int i=0;i<ptTile.length;i++){
 				ptTile[i].stateLoad(buf);
 			}
+
+			 // Atualizar paletas na PPU memory
+       		 updatePalettes();
 
 			// Update internally stored stuff from VRAM memory:
 			/*short[] mem = ppuMem.mem;
@@ -1908,6 +1966,25 @@ public class PPU{
 		for(int i=0;i<4;i++){
 			buf.putByte((short)ntable1[i]);
 			nameTable[i].stateSave(buf);
+		}
+
+		 // Paletas
+		for(int i = 0; i < 16; i++) {
+			buf.putByte((short)(imgPalette[i] & 0xFF));
+		}
+		for(int i = 0; i < 16; i++) {
+			buf.putByte((short)(sprPalette[i] & 0xFF));
+		}
+
+		// Sprite data
+		for(int i = 0; i < 64; i++) {
+			buf.putByte((short)sprX[i]);
+			buf.putByte((short)sprY[i]);
+			buf.putByte((short)sprTile[i]);
+			buf.putByte((short)sprCol[i]);
+			buf.putBoolean(vertFlip[i]);
+			buf.putBoolean(horiFlip[i]);
+			buf.putBoolean(bgPriority[i]);
 		}
 
 		// Pattern data:

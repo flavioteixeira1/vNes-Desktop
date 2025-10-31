@@ -16,7 +16,7 @@ public class BufferView extends JPanel{
 	
 	protected NES nes;
 	
-	private BufferedImage img;
+	public BufferedImage img;
 	private VolatileImage vimg;
 	private boolean usingMenu = false;
 	
@@ -171,14 +171,27 @@ public class BufferView extends JPanel{
 	
 	
 	public void imageReady(boolean skipFrame){
-
-		// Adicionar verificação de null
-    if (img == null  || nes == null) {
-        System.out.println("BufferView.imageReady() - Componentes não inicializados, ignorando");
-        return;
-    }
-    
+		// Verificação mais detalhada
+		if (this.nes == null) {
+			System.err.println("BufferView.imageReady() - NES é null");
+			return;
+		}
 		
+		if (this.nes.getPpu() == null) {
+			System.err.println("BufferView.imageReady() - PPU do NES é null");
+			return;
+		}
+		
+		if (this.nes.getPpu().buffer == null) {
+			System.err.println("BufferView.imageReady() - Buffer da PPU é null");
+			return;
+		}
+		
+		// Adicionar verificação de null
+		if (img == null  || nes == null) {
+			System.out.println("BufferView.imageReady() - Componentes não inicializados, ignorando");
+			return;
+		}
 		// Skip image drawing if minimized or frameskipping:
 		if(!skipFrame){
 			

@@ -29,6 +29,7 @@ public final class PAPU{
 	short channelEnableValue;
 
 	byte b1,b2,b3,b4;
+	//short b1,b2,b3,b4;
 	int bufferSize = 2048;
 	int bufferIndex;
 	int sampleRate = 44100;
@@ -131,76 +132,181 @@ public final class PAPU{
 
 	}
 
-	public void stateLoad(ByteBuffer buf){
-		// not yet.
-	}
+	
+	public void stateSave(ByteBuffer buf) {
+    buf.putByte((short)1); // versão
+    
+    // Salvar estado dos canais de áudio
+    square1.stateSave(buf);
+    square2.stateSave(buf);
+    triangle.stateSave(buf);
+    noise.stateSave(buf);
+    dmc.stateSave(buf);
+    // Salvar variáveis do PAPU
+    // Salvar registradores e contadores
+    buf.putInt(frameIrqCounter);
+    buf.putInt(frameIrqCounterMax);
+    buf.putInt(initCounter);
+    buf.putInt(channelEnableValue);
+    buf.putInt(masterFrameCounter);
+    buf.putInt(derivedFrameCounter);
+    buf.putInt(countSequence);
+    buf.putInt(sampleTimer);
+    buf.putInt(sampleTimerMax);
+    buf.putInt(sampleCount);
+	buf.putByte(b1);
+    buf.putByte(b2);
+    buf.putByte(b3);
+    buf.putByte(b4);
+	buf.putShort(channelEnableValue);
+	buf.putInt(bufferSize);
+    buf.putInt(bufferIndex);
+    buf.putInt(sampleRate);
+    
+    // Salvar flags
+    buf.putBoolean(frameIrqEnabled);
+    buf.putBoolean(frameIrqActive);
+    buf.putBoolean(frameClockNow);
+    buf.putBoolean(initingHardware);
+	buf.putBoolean(startedPlaying);
+    buf.putBoolean(recordOutput);
+    buf.putBoolean(stereo);
 
-	public void stateSave(ByteBuffer buf){
-		// not yet.
-	}
+	buf.putBoolean(frameIrqEnabled);
+    buf.putBoolean(frameIrqActive);
+    buf.putBoolean(frameClockNow);
+    buf.putBoolean(startedPlaying);
+    buf.putBoolean(recordOutput);
+    buf.putBoolean(stereo);
+    buf.putBoolean(initingHardware);
+    
+    buf.putBoolean(userEnableSquare1);
+    buf.putBoolean(userEnableSquare2);
+    buf.putBoolean(userEnableTriangle);
+    buf.putBoolean(userEnableNoise);
+    buf.putBoolean(userEnableDmc);
+    
+    buf.putInt(masterFrameCounter);
+    buf.putInt(derivedFrameCounter);
+    buf.putInt(countSequence);
+    buf.putInt(sampleTimer);
+    buf.putInt(frameTime);
+    buf.putInt(sampleTimerMax);
+    buf.putInt(sampleCount);
+    buf.putInt(sampleValueL);
+    buf.putInt(sampleValueR);
+    buf.putInt(triValue);
+    
+    buf.putInt(smpSquare1);
+    buf.putInt(smpSquare2);
+    buf.putInt(smpTriangle);
+    buf.putInt(smpNoise);
+    buf.putInt(smpDmc);
+    buf.putInt(accCount);
+    buf.putInt(sq_index);
+    buf.putInt(tnd_index);
+    
 
+	// DC removal vars
+    buf.putInt(prevSampleL);
+    buf.putInt(prevSampleR);
+    buf.putInt(smpAccumL);
+    buf.putInt(smpAccumR);
+    buf.putInt(smpDiffL);
+    buf.putInt(smpDiffR);
+    
+    buf.putInt(dacRange);
+    buf.putInt(dcValue);
+    buf.putInt(masterVolume);
 
-	/*
-	public synchronized void start(){
-		System.out.println("[PAPU] Iniciando sistema de áudio...");
-		//System.out.println("* Starting PAPU lines.");
-		if(line!=null && line.isActive()){
-			//System.out.println("* Already running.");
-			//System.out.println("[PAPU] Linha de áudio já está ativa");
-			return;
+	 // Panning
+    for (int i = 0; i < panning.length; i++) {
+        buf.putInt(panning[i]);
+    }
+    
+    buf.putInt(extraCycles);
+    buf.putInt(maxCycles);
+}
+
+public void stateLoad(ByteBuffer buf) {
+			// Carregar estado dos canais de áudio
+			square1.stateLoad(buf);
+			square2.stateLoad(buf);
+			triangle.stateLoad(buf);
+			noise.stateLoad(buf);
+			dmc.stateLoad(buf);
+			
+			// Carregar variáveis do PAPU
+			frameIrqCounter = buf.readInt();
+			frameIrqCounterMax = buf.readInt();
+			initCounter = buf.readInt();
+			channelEnableValue = buf.readShort();
+			byte b1 = (byte)buf.readByte();  
+			byte b2 = (byte)buf.readByte();  
+			byte b3 = (byte)buf.readByte();  
+			byte b4 = (byte)buf.readByte();  
+			bufferSize = buf.readInt();
+			bufferIndex = buf.readInt();
+			sampleRate = buf.readInt();
+			
+			frameIrqEnabled = buf.readBoolean();
+			frameIrqActive = buf.readBoolean();
+			frameClockNow = buf.readBoolean();
+			startedPlaying = buf.readBoolean();
+			recordOutput = buf.readBoolean();
+			stereo = buf.readBoolean();
+			initingHardware = buf.readBoolean();
+			
+			userEnableSquare1 = buf.readBoolean();
+			userEnableSquare2 = buf.readBoolean();
+			userEnableTriangle = buf.readBoolean();
+			userEnableNoise = buf.readBoolean();
+			userEnableDmc = buf.readBoolean();
+			
+			masterFrameCounter = buf.readInt();
+			derivedFrameCounter = buf.readInt();
+			countSequence = buf.readInt();
+			sampleTimer = buf.readInt();
+			frameTime = buf.readInt();
+			sampleTimerMax = buf.readInt();
+			sampleCount = buf.readInt();
+			sampleValueL = buf.readInt();
+			sampleValueR = buf.readInt();
+			triValue = buf.readInt();
+			
+			smpSquare1 = buf.readInt();
+			smpSquare2 = buf.readInt();
+			smpTriangle = buf.readInt();
+			smpNoise = buf.readInt();
+			smpDmc = buf.readInt();
+			accCount = buf.readInt();
+			sq_index = buf.readInt();
+			tnd_index = buf.readInt();
+			
+			// DC removal vars
+			prevSampleL = buf.readInt();
+			prevSampleR = buf.readInt();
+			smpAccumL = buf.readInt();
+			smpAccumR = buf.readInt();
+			smpDiffL = buf.readInt();
+			smpDiffR = buf.readInt();
+			
+			dacRange = buf.readInt();
+			dcValue = buf.readInt();
+			masterVolume = buf.readInt();
+			
+			// Panning
+			for (int i = 0; i < panning.length; i++) {
+				panning[i] = buf.readInt();
+			}
+			
+			extraCycles = buf.readInt();
+			maxCycles = buf.readInt();
+			
+			// Atualizar estado após carregamento
+			updateStereoPos();
+			updateChannelEnable(channelEnableValue);
 		}
-
-		bufferIndex = 0;
-		Mixer.Info[] mixerInfo = AudioSystem.getMixerInfo();
-		System.out.println("[PAPU] Mixers disponíveis (" + mixerInfo.length + "):");
-		
-		if(mixerInfo==null || mixerInfo.length==0){
-			//System.out.println("No audio mixer available, sound disabled.");
-			System.out.println("[PAPU] ERRO: Nenhum mixer de áudio disponível. Som desabilitado.");
-			Globals.enableSound = false;
-			return;
-		}
-				System.out.println("[PAPU] Mixers disponíveis: " + mixerInfo.length);
-				for(int i = 0; i < mixerInfo.length; i++) {
-					System.out.println("[PAPU] Mixer " + i + ": " + mixerInfo[i].getName());
-				}
-
-				try {
-					mixer = AudioSystem.getMixer(mixerInfo[1]);
-					System.out.println("[PAPU] Mixer selecionado: " + mixerInfo[1].getName());
-				} catch (Exception e) {
-					System.out.println("[PAPU] ERRO ao selecionar mixer 1, tentando mixer 0");
-					try {
-						mixer = AudioSystem.getMixer(mixerInfo[0]);
-					} catch (Exception e2) {
-						System.out.println("[PAPU] ERRO: Não foi possível acessar nenhum mixer");
-						Globals.enableSound = false;
-						return;
-					}
-				}
-
-		mixer = AudioSystem.getMixer(mixerInfo[1]);
-		AudioFormat audioFormat = new AudioFormat(sampleRate,16,(stereo?2:1),true,false);
-		System.out.println("[PAPU] Formato de áudio: " + audioFormat);
-		DataLine.Info info = new DataLine.Info(SourceDataLine.class,audioFormat,sampleRate);
-		try{
-			System.out.println("[PAPU] Tentando abrir linha de áudio...");
-			line = (SourceDataLine)AudioSystem.getLine(info);
-			line.open(audioFormat);
-			line.start();
-			System.out.println("[PAPU] Linha de áudio aberta com sucesso!");
-            System.out.println("[PAPU] Buffer size: " + line.getBufferSize());
-            System.out.println("[PAPU] Format: " + line.getFormat());
-
-		}catch(Exception e){
-			//System.out.println("Couldn't get sound lines.");
-			System.out.println("[PAPU] ERRO: Não foi possível obter linhas de som: " + e.getMessage());
-            e.printStackTrace();
-		}
-
-	}
-	 */
-	//Aqui
 
 	public synchronized void start(){
 				//System.out.println("[PAPU] Iniciando sistema de áudio...");

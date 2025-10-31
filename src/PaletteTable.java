@@ -95,6 +95,55 @@ public class PaletteTable{
 		}
 		
 	}
+
+
+
+	
+		public void stateSave(ByteBuffer buf) {
+		// Salvar paleta atual
+			for (int i = 0; i < 64; i++) {
+				buf.putInt(curTable[i]);
+			}
+			for (int i = 0; i < 64; i++) {
+				buf.putInt(origTable[i]);
+			}
+			for (int i = 0; i < 8; i++) {
+				for (int j = 0; j < 64; j++) {
+					buf.putInt(emphTable[i][j]);
+				}
+			}
+			
+			buf.putInt(currentEmph);
+			buf.putInt(currentHue);
+			buf.putInt(currentSaturation);
+			buf.putInt(currentLightness);
+			buf.putInt(currentContrast);	
+		}
+
+		public void stateLoad(ByteBuffer buf) {
+			// Carregar paleta
+			for (int i = 0; i < 64; i++) {
+				curTable[i] = buf.readInt();
+			}
+			for (int i = 0; i < 64; i++) {
+				origTable[i] = buf.readInt();
+			}
+			for (int i = 0; i < 8; i++) {
+				for (int j = 0; j < 64; j++) {
+					emphTable[i][j] = buf.readInt();
+				}
+			}
+			
+			currentEmph = buf.readInt();
+			currentHue = buf.readInt();
+			currentSaturation = buf.readInt();
+			currentLightness = buf.readInt();
+			currentContrast = buf.readInt();
+			
+			// Atualizar paleta após carregamento
+			setEmphasis(currentEmph);
+		}
+		
 	
 	
 	public void makeTables(){

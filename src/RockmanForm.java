@@ -4,6 +4,8 @@ import javax.swing.plaf.PanelUI;
 import java.awt.Container.*;
 import java.awt.event.*;
 import java.io.File;
+import java.util.ArrayList;
+
 import javax.swing.*;
 
 public class RockmanForm extends Applet implements Runnable, ActionListener {
@@ -19,8 +21,8 @@ public class RockmanForm extends Applet implements Runnable, ActionListener {
     int samplerate;
     int romSize;
     int progress;
-    //UIApp gui;
-    AppletUIApp2 gui;
+    UIApp gui;
+    //AppletUIApp2 gui;
     NES jogo;
     ScreenView panelScreen;
     String rom = "";
@@ -35,6 +37,11 @@ public class RockmanForm extends Applet implements Runnable, ActionListener {
     private JMenu fileMenu;
     private JMenuItem loadRomItem;
     private JFrame parentFrame;
+
+    private JMenu saveStateMenu;
+    private JMenuItem[] saveStateItems;
+    private JMenuItem loadStateItem;
+    private JMenuItem saveStateWithNameItem;
 
 
     public void setParentFrame(JFrame frame) {
@@ -52,15 +59,203 @@ public class RockmanForm extends Applet implements Runnable, ActionListener {
             fileMenu.add(loadRomItem);
             menuBar.add(fileMenu);
             parentFrame.setJMenuBar(menuBar);
+
+            saveStateMenu = new JMenu("Save States");
+
+             saveStateItems = new JMenuItem[10];
+            for (int i = 0; i < 10; i++) {
+                final int slot = i;
+                saveStateItems[i] = new JMenuItem((i + 1) + ": " + getSaveStateName(i));
+                saveStateItems[i].addActionListener(new ActionListener() {
+                    public void actionPerformed(ActionEvent e) {
+                        loadSaveState(slot);
+                    }
+                });
+                saveStateMenu.add(saveStateItems[i]);
+            }
+            
+            saveStateMenu.addSeparator();
+            
+            // Salvar estado com nome personalizado
+            saveStateWithNameItem = new JMenuItem("Salvar Estado com Nome...");
+            saveStateWithNameItem.addActionListener(new ActionListener() {
+                public void actionPerformed(ActionEvent e) {
+                    showSaveStateWithNameDialog();
+                }
+            });
+            saveStateMenu.add(saveStateWithNameItem);
+            
+            // Carregar estado
+            loadStateItem = new JMenuItem("Carregar Estado...");
+            loadStateItem.addActionListener(new ActionListener() {
+                public void actionPerformed(ActionEvent e) {
+                    showLoadStateDialog();
+                }
+            });
+            saveStateMenu.add(loadStateItem);
+            
+            menuBar.add(fileMenu);
+            menuBar.add(saveStateMenu);
+            parentFrame.setJMenuBar(menuBar);
+            
+            updateSaveStateMenu();
+        
+
         }
     }
 
+
+    private String getSaveStateName(int slot) {
+            if (jogo != null && jogo.getSaveStateManager() != null) {
+                String name = jogo.getSaveStateManager().getStateName(slot);
+                boolean exists = jogo.getSaveStateManager().stateExists(slot);
+                return exists ? name : "[Vazio] " + name;
+            }
+            return "[Vazio] Save State " + (slot + 1);
+        }
+
+     private void updateSaveStateMenu() {
+            if (saveStateItems != null && jogo != null && jogo.getSaveStateManager() != null) {
+                for (int i = 0; i < 10; i++) {
+                    saveStateItems[i].setText((i + 1) + ": " + getSaveStateName(i));
+                }
+            }
+        }
+
+    private void loadSaveState(int slot) {
+            if (jogo != null && jogo.loadState(slot)) {
+                JOptionPane.showMessageDialog(parentFrame, 
+                    "Estado carregado do slot " + (slot + 1) + ": " + 
+                    jogo.getSaveStateManager().getStateName(slot),
+                    "Estado Carregado", JOptionPane.INFORMATION_MESSAGE);
+            } else {
+                JOptionPane.showMessageDialog(parentFrame,
+                    "Erro ao carregar estado do slot " + (slot + 1),
+                    "Erro", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+
+    
+    private void showSaveStateWithNameDialog() {
+                if (jogo == null) return;
+                
+                // Diálogo para selecionar slot
+                String[] slotOptions = new String[10];
+                for (int i = 0; i < 10; i++) {
+                    slotOptions[i] = "Slot " + (i + 1) + " - " + getSaveStateName(i);
+                }
+                
+                String slotChoice = (String) JOptionPane.showInputDialog(parentFrame,
+                    "Selecione o slot para salvar:",
+                    "Salvar Estado",
+                    JOptionPane.QUESTION_MESSAGE,
+                    null,
+                    slotOptions,
+                    slotOptions[0]);
+                
+                if (slotChoice != null) {
+                    int slot = -1;
+                    for (int i = 0; i < 10; i++) {
+                        if (slotOptions[i].equals(slotChoice)) {
+                            slot = i;
+                            break;
+                        }
+                    }
+                    
+                    if (slot != -1) {
+                        // Diálogo para nome personalizado
+                        String currentName = jogo.getSaveStateManager().getStateName(slot);
+                        String customName = JOptionPane.showInputDialog(parentFrame,
+                            "Digite um nome para o save state:",
+                            currentName);
+                        
+                        if (customName != null && !customName.trim().isEmpty()) {
+                            if (jogo.saveState(slot, customName.trim())) {
+                                JOptionPane.showMessageDialog(parentFrame,
+                                    "Estado salvo no slot " + (slot + 1) + ": " + customName,
+                                    "Estado Salvo", JOptionPane.INFORMATION_MESSAGE);
+                                updateSaveStateMenu();
+                            } else {
+                                JOptionPane.showMessageDialog(parentFrame,
+                                    "Erro ao salvar estado",
+                                    "Erro", JOptionPane.ERROR_MESSAGE);
+                            }
+                        }
+                    }
+                }
+            }
+
+    
+    private void showLoadStateDialog() {
+                if (jogo == null) return;
+                
+                // Listar apenas slots que existem
+                java.util.List<String> availableSlots = new ArrayList<>();
+                java.util.List<Integer> slotNumbers = new ArrayList<>();
+                
+                for (int i = 0; i < 10; i++) {
+                    if (jogo.getSaveStateManager().stateExists(i)) {
+                        availableSlots.add("Slot " + (i + 1) + ": " + jogo.getSaveStateManager().getStateName(i));
+                        slotNumbers.add(i);
+                    }
+                }
+                
+                if (availableSlots.isEmpty()) {
+                    JOptionPane.showMessageDialog(parentFrame,
+                        "Nenhum save state encontrado",
+                        "Aviso", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+                
+                String[] slotArray = availableSlots.toArray(new String[0]);
+                String slotChoice = (String) JOptionPane.showInputDialog(parentFrame,
+                    "Selecione o estado para carregar:",
+                    "Carregar Estado",
+                    JOptionPane.QUESTION_MESSAGE,
+                    null,
+                    slotArray,
+                    slotArray[0]);
+                
+                if (slotChoice != null) {
+                    for (int i = 0; i < availableSlots.size(); i++) {
+                        if (slotArray[i].equals(slotChoice)) {
+                            loadSaveState(slotNumbers.get(i));
+                            break;
+                        }
+                    }
+                }
+            }
+
+        
+    
     @Override
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() == loadRomItem) {
             loadRomFromFile();
         }
     }
+
+    public void keyPressed(KeyEvent e) {
+            int keyCode = e.getKeyCode();
+            // F1-F10: Salvar estados
+            if (keyCode >= KeyEvent.VK_F1 && keyCode <= KeyEvent.VK_F10 && e.isControlDown()) {
+                int slot = keyCode - KeyEvent.VK_F1;
+                if (jogo != null) {
+                    String currentName = jogo.getSaveStateManager().getStateName(slot);
+                    jogo.saveState(slot, currentName);
+                    System.out.println("Estado salvo rapidamente no slot " + (slot + 1));
+                }
+            }
+            // F1-F10: Carregar estados
+            else if (keyCode >= KeyEvent.VK_F1 && keyCode <= KeyEvent.VK_F10) {
+                int slot = keyCode - KeyEvent.VK_F1;
+                if (jogo != null && jogo.getSaveStateManager().stateExists(slot)) {
+                    jogo.loadState(slot);
+                    System.out.println("Estado carregado rapidamente do slot " + (slot + 1));
+                }
+            }
+        }
+
 
     private void loadRomFromFile() {
         JFileChooser fileChooser = new JFileChooser();
@@ -84,104 +279,133 @@ public class RockmanForm extends Applet implements Runnable, ActionListener {
             loadNewRom(selectedFile.getAbsolutePath());
         }
     }
+   
 
     private void loadNewRom(String romPath) {
-        System.out.println("=== LOAD NEW ROM ===");
-        System.out.println("Caminho: " + romPath);
-        
-        // Parar completamente a emulação anterior
-        if (jogo != null && jogo.isRunning()) {
-            System.out.println("Parando emulação atual...");
-            jogo.stopEmulation();
+            System.out.println("RockmanForm.loadNewRom() - Iniciando carregamento de nova ROM");
+            System.out.println("Caminho: " + romPath);
             
-            // Esperar um pouco mais para garantir que parou
-            try {
-                Thread.sleep(200);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+            // 1. Parar thread de emulação atual se estiver rodando
+            if (jogo != null && jogo.isRunning()) {
+                System.out.println("Parando emulação atual...");
+                jogo.stopEmulation();
+                
+                try {
+                    Thread.sleep(400); // Delay maior
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
             }
-        }
-        
-        // Remover tela atual se existir
-        if (panelScreen != null) {
-            System.out.println("Removendo tela anterior...");
-            this.remove(panelScreen);
-            panelScreen.destroy();
-            panelScreen = null;
-            // Forçar garbage collection
-            System.gc();
-        }
-        
-        // Resetar estado
-        started = false;
-        showWelcomeScreen = false;
-        romLoaded = false;
-
-		// Notificar a UI que a ROM mudou
-		if (gui != null) {
-        System.out.println("Notificando UI sobre mudança de ROM...");
-        gui.romChanged();
-    	}
-        
-        // Carregar nova ROM
-        this.rom = romPath;
-        System.out.println("Nova ROM definida: " + rom);
-
-        // Reiniciar thread de emulação
-        System.out.println("Iniciando nova thread de emulação...");
-        Thread t = new Thread(this);
-        t.setName("NES-Emulation-Thread");
-        t.start();
-    }
+            
+            // 2. Não remover o panelScreen - vamos reutilizá-lo
+            // apenas garantir que está limpo
+            if (panelScreen != null) {
+                System.out.println("Limpando ScreenView atual...");
+                // Não remover do container, apenas limpar
+                panelScreen.clear();
+            }
+            
+            // 3. Resetar estado
+            started = false;
+            showWelcomeScreen = false;
+            romLoaded = false;
+            this.rom = romPath;
+            
+            System.out.println("Nova ROM definida: " + rom);
+            
+            if (gui != null) {
+                System.out.println("Solicitando carregamento da ROM via UIApp...");
+                gui.loadNewRom(romPath);
+                
+                // Obter nova referência do NES
+                jogo = gui.getNES();
+                
+                if (jogo != null && jogo.rom != null && jogo.rom.isValid()) {
+                    System.out.println("ROM carregada com sucesso!");
+                    
+                    // 4. Se o panelScreen já existe, apenas atualizar a referência
+                    if (panelScreen != null) {
+                        System.out.println("Atualizando referência do NES no ScreenView existente...");
+                        panelScreen.updateNESReference(jogo);
+                    } else {
+                        // 5. Se não existe, criar novo
+                        System.out.println("Criando novo ScreenView...");
+                        addScreenView();
+                    }
+                    
+                    // 6. Pequeno delay para estabilização
+                    try {
+                        Thread.sleep(300);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    
+                    // 7. Configurar propriedades
+                    Globals.timeEmulation = timeemulation;
+                    if (jogo.ppu != null) {
+                        jogo.ppu.showSoundBuffer = showsoundbuffer;
+                    }
+                    
+                    // 8. Diagnóstico final antes de iniciar
+                    System.out.println("=== DIAGNÓSTICO FINAL ===");
+                    System.out.println("NES: " + (jogo != null ? "OK" : "NULL"));
+                    System.out.println("PPU: " + (jogo != null && jogo.getPpu() != null ? "OK" : "NULL"));
+                    System.out.println("ScreenView: " + (panelScreen != null ? "OK" : "NULL"));
+                    System.out.println("Buffer: " + (jogo != null && jogo.getPpu() != null && jogo.getPpu().buffer != null ? "OK" : "NULL"));
+                    System.out.println("=========================");
+                    
+                    // 9. AGORA iniciar emulação
+                    System.out.println("Iniciando emulação...");
+                    jogo.startEmulation();
+                    
+                    romLoaded = true;
+                    showWelcomeScreen = false;
+                    System.out.println("Emulação configurada com sucesso!");
+                    
+                } else {
+                    System.err.println("Falha ao carregar ROM, mostrando tela de boas-vindas");
+                    showWelcomeScreen = true;
+                    romLoaded = false;
+                    repaint();
+                }
+            }
+        } 
+  
 
     public void init() {
-        System.gc();
-        
-        // CONFIGURAÇÕES OTIMIZADAS PARA 60 FPS COM ÁUDIO
-        this.scale = true;
-        this.timeemulation = true;
-        this.fps = true;
-        this.stereo = true;
-        this.nicesound = true;
-        this.sound = true;
-
-     //   System.out.println("=== INICIALIZANDO SISTEMA ===");
-     //   System.out.println("Áudio: " + (sound ? "HABILITADO" : "DESABILITADO"));
-     //   System.out.println("FPS alvo: 60");
-        
-        // DIAGNÓSTICO DE ÁUDIO
-      //  System.out.println("=== INICIALIZANDO SISTEMA DE ÁUDIO ===");
-     //   AudioDiagnostic audioDiagnostic = new AudioDiagnostic();
-      //  audioDiagnostic.checkAudioSystem();
-        
-        // Criar welcome.nes se não existir
-        File welcomeROM = new File("welcome.nes");
-        if (!welcomeROM.exists()) {
-            WelcomeROMCreator.createWelcomeROM();
-        }
-        
-        //gui = new UIApp(this);
-        gui = new AppletUIApp2(this);
-        gui.init(false);
-        
-        Globals.appletMode = true;
-        Globals.memoryFlushValue = 0x00;
-        Globals.preferredFrameRate = 60; // FORÇAR 60 FPS
-        Globals.frameTime = 1000000 / 60;
-        Globals.enableSound = true; // ← DESABILITAR GLOBALMENTE
-        
-        jogo = gui.getNES();
-        jogo.enableSound(sound);
-        jogo.setFramerate(60); // CONFIGURAR 60 FPS
-        jogo.reset();
-
-        showWelcomeScreen = true;
-        romLoaded = false;
-        
-       // System.out.println("✅ Sistema inicializado - 60 FPS com áudio");
+    System.gc();
+    // CONFIGURAÇÕES OTIMIZADAS PARA 60 FPS COM ÁUDIO
+    this.scale = true;
+    this.timeemulation = true;
+    this.fps = true;
+    this.stereo = true;
+    this.nicesound = true;
+    this.sound = true;
+    // Criar welcome.nes se não existir
+    File welcomeROM = new File("welcome.nes");
+    if (!welcomeROM.exists()) {
+        WelcomeROMCreator.createWelcomeROM();
     }
-
-
+    // Inicializar GUI primeiro
+    gui = new UIApp(this);
+    gui.init(false);
+    // Obter referência do NES
+    jogo = gui.getNES();
+    // Configurar globais
+    Globals.appletMode = true;
+    Globals.memoryFlushValue = 0x00;
+    Globals.preferredFrameRate = 60;
+    Globals.frameTime = 1000000 / 60;
+    Globals.enableSound = true;
+    if (jogo != null) {
+        jogo.enableSound(sound);
+        jogo.setFramerate(60);
+        jogo.reset();
+    }
+    showWelcomeScreen = true;
+    romLoaded = false;
+    System.out.println("RockmanForm.init() - Inicialização completa");
+    }
 
 
     public void setRomPath(String romPath) {
@@ -189,8 +413,12 @@ public class RockmanForm extends Applet implements Runnable, ActionListener {
     }
 
     public void addScreenView() {
-        showWelcomeScreen = false;
-        romLoaded = true;
+        System.out.println("RockmanForm.addScreenView() - Adicionando ScreenView");
+        
+        if (gui == null || gui.getScreenView() == null) {
+            System.err.println("GUI ou ScreenView não inicializados");
+            return;
+        }
         
         panelScreen = (ScreenView) gui.getScreenView();
         panelScreen.setFPSEnabled(fps);
@@ -214,10 +442,15 @@ public class RockmanForm extends Applet implements Runnable, ActionListener {
         this.setIgnoreRepaint(true);
         this.add(panelScreen);
         
-        // Forçar o componente a ser visível
+        // Forçar o componente a ser visível e focado
         panelScreen.setVisible(true);
+        panelScreen.setFocusable(true);
+        panelScreen.requestFocus();
+        
         this.validate();
         this.repaint();
+        
+        System.out.println("ScreenView adicionado com sucesso");
     }
 
     public void start() {
@@ -513,7 +746,7 @@ public class RockmanForm extends Applet implements Runnable, ActionListener {
     private void printDiagnostics() {
         System.out.println("=== DIAGNÓSTICO DO SISTEMA ===");
         //System.out.println("FPS: " + (gui instanceof UIApp ? "UIApp" : "Unknown"));
-        System.out.println("FPS: " + (gui instanceof AppletUIApp2 ? "AppletUIApp" : "Unknown"));
+        System.out.println("FPS: " + (gui instanceof UIApp ? "AppletUIApp" : "Unknown"));
         System.out.println("Áudio habilitado: " + Globals.enableSound);
         System.out.println("ROM carregada: " + romLoaded);
         System.out.println("NES running: " + (jogo != null && jogo.isRunning()));

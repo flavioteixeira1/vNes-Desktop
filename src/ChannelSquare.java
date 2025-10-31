@@ -186,6 +186,63 @@ public class ChannelSquare implements PapuChannel{
 	public int getLengthStatus(){
 		return ((lengthCounter==0 || !isEnabled)?0:1);
 	}
+
+
+	public void stateSave(ByteBuffer buf) {
+			buf.putBoolean(isEnabled);
+			buf.putBoolean(lengthCounterEnable);
+			buf.putBoolean(sweepActive);
+			buf.putBoolean(envDecayDisable);
+			buf.putBoolean(envDecayLoopEnable);
+			buf.putBoolean(envReset);
+			buf.putBoolean(sweepCarry);
+			buf.putBoolean(updateSweepPeriod);
+			
+			buf.putInt(progTimerCount);
+			buf.putInt(progTimerMax);
+			buf.putInt(lengthCounter);
+			buf.putInt(squareCounter);
+			buf.putInt(sweepCounter);
+			buf.putInt(sweepCounterMax);
+			buf.putInt(sweepMode);
+			buf.putInt(sweepShiftAmount);
+			buf.putInt(envDecayRate);
+			buf.putInt(envDecayCounter);
+			buf.putInt(envVolume);
+			buf.putInt(masterVolume);
+			buf.putInt(dutyMode);
+			buf.putInt(sweepResult);
+			buf.putInt(sampleValue);
+			buf.putInt(vol);
+		}
+
+public void stateLoad(ByteBuffer buf) {
+			isEnabled = buf.readBoolean();
+			lengthCounterEnable = buf.readBoolean();
+			sweepActive = buf.readBoolean();
+			envDecayDisable = buf.readBoolean();
+			envDecayLoopEnable = buf.readBoolean();
+			envReset = buf.readBoolean();
+			sweepCarry = buf.readBoolean();
+			updateSweepPeriod = buf.readBoolean();
+			
+			progTimerCount = buf.readInt();
+			progTimerMax = buf.readInt();
+			lengthCounter = buf.readInt();
+			squareCounter = buf.readInt();
+			sweepCounter = buf.readInt();
+			sweepCounterMax = buf.readInt();
+			sweepMode = buf.readInt();
+			sweepShiftAmount = buf.readInt();
+			envDecayRate = buf.readInt();
+			envDecayCounter = buf.readInt();
+			envVolume = buf.readInt();
+			masterVolume = buf.readInt();
+			dutyMode = buf.readInt();
+			sweepResult = buf.readInt();
+			sampleValue = buf.readInt();
+			vol = buf.readInt();
+		}
 	
 	public void reset(){
 		
