@@ -59,6 +59,9 @@ src/target
 *.war
 *.ear
 
+#arquivos de save state
+*.dat
+
 
 # Configurações específicas do ambiente
 application.properties
