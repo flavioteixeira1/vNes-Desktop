@@ -308,6 +308,8 @@ public void stateLoad(ByteBuffer buf) {
 			updateChannelEnable(channelEnableValue);
 		}
 
+
+
 	public synchronized void start(){
 				//System.out.println("[PAPU] Iniciando sistema de áudio...");
 				
@@ -346,7 +348,8 @@ public void stateLoad(ByteBuffer buf) {
 					Globals.enableSound = false;
 				}
 	}
-
+	
+		
 
 	public void forceBufferFlush() {
 		if(line != null && line.available() < line.getBufferSize() / 2) {

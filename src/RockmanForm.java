@@ -51,55 +51,58 @@ public class RockmanForm extends Applet implements Runnable, ActionListener {
 
     private void createMenu() {
         if (parentFrame != null) {
-            menuBar = new JMenuBar();
-            fileMenu = new JMenu("File");
-            loadRomItem = new JMenuItem("Load ROM");
-            loadRomItem.addActionListener(this);
-            
-            fileMenu.add(loadRomItem);
-            menuBar.add(fileMenu);
-            parentFrame.setJMenuBar(menuBar);
+            SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+                    menuBar = new JMenuBar();
+                    fileMenu = new JMenu("File");
+                    loadRomItem = new JMenuItem("Load ROM");
+                    loadRomItem.addActionListener(RockmanForm.this);
+                    
+                    fileMenu.add(loadRomItem);
+                    menuBar.add(fileMenu);
+                    parentFrame.setJMenuBar(menuBar);
 
-            saveStateMenu = new JMenu("Save States");
+                    saveStateMenu = new JMenu("Save States");
 
-             saveStateItems = new JMenuItem[10];
-            for (int i = 0; i < 10; i++) {
-                final int slot = i;
-                saveStateItems[i] = new JMenuItem((i + 1) + ": " + getSaveStateName(i));
-                saveStateItems[i].addActionListener(new ActionListener() {
-                    public void actionPerformed(ActionEvent e) {
-                        loadSaveState(slot);
-                    }
-                });
-                saveStateMenu.add(saveStateItems[i]);
-            }
+                     saveStateItems = new JMenuItem[10];
+                        for (int i = 0; i < 10; i++) {
+                            final int slot = i;
+                            saveStateItems[i] = new JMenuItem((i + 1) + ": " + getSaveStateName(i));
+                            saveStateItems[i].addActionListener(new ActionListener() {
+                                public void actionPerformed(ActionEvent e) {
+                                    loadSaveState(slot);
+                                }
+                            });
+                            saveStateMenu.add(saveStateItems[i]);
+                        }
             
-            saveStateMenu.addSeparator();
+                  saveStateMenu.addSeparator();
             
-            // Salvar estado com nome personalizado
-            saveStateWithNameItem = new JMenuItem("Salvar Estado com Nome...");
-            saveStateWithNameItem.addActionListener(new ActionListener() {
-                public void actionPerformed(ActionEvent e) {
-                    showSaveStateWithNameDialog();
+                    // Salvar estado com nome personalizado
+                    saveStateWithNameItem = new JMenuItem("Salvar Estado com Nome...");
+                    saveStateWithNameItem.addActionListener(new ActionListener() {
+                        public void actionPerformed(ActionEvent e) {
+                            showSaveStateWithNameDialog();
+                        }
+                    });
+                    saveStateMenu.add(saveStateWithNameItem);
+            
+                    // Carregar estado
+                    loadStateItem = new JMenuItem("Carregar Estado...");
+                    loadStateItem.addActionListener(new ActionListener() {
+                        public void actionPerformed(ActionEvent e) {
+                            showLoadStateDialog();
+                        }
+                    });
+                    saveStateMenu.add(loadStateItem);
+                    
+                    menuBar.add(fileMenu);
+                    menuBar.add(saveStateMenu);
+                    parentFrame.setJMenuBar(menuBar);
+                    
+                    updateSaveStateMenu();
                 }
             });
-            saveStateMenu.add(saveStateWithNameItem);
-            
-            // Carregar estado
-            loadStateItem = new JMenuItem("Carregar Estado...");
-            loadStateItem.addActionListener(new ActionListener() {
-                public void actionPerformed(ActionEvent e) {
-                    showLoadStateDialog();
-                }
-            });
-            saveStateMenu.add(loadStateItem);
-            
-            menuBar.add(fileMenu);
-            menuBar.add(saveStateMenu);
-            parentFrame.setJMenuBar(menuBar);
-            
-            updateSaveStateMenu();
-        
 
         }
     }
@@ -258,26 +261,45 @@ public class RockmanForm extends Applet implements Runnable, ActionListener {
 
 
     private void loadRomFromFile() {
-        JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setFileFilter(new javax.swing.filechooser.FileFilter() {
-            @Override
-            public boolean accept(File f) {
-                return f.isDirectory() || 
-                       f.getName().toLowerCase().endsWith(".nes") ||
-                       f.getName().toLowerCase().endsWith(".nez");
-            }
-            
-            @Override
-            public String getDescription() {
-                return "NES ROM Files (*.nes, *.nez)";
+        try {
+        SwingUtilities.invokeLater (new Runnable() {
+            public void run() {
+                JFileChooser fileChooser = new JFileChooser();
+                fileChooser.setFileFilter(new javax.swing.filechooser.FileFilter() {
+                    @Override
+                    public boolean accept(File f) {
+                        return f.isDirectory() || 
+                            f.getName().toLowerCase().endsWith(".nes") ||
+                            f.getName().toLowerCase().endsWith(".nez");
+                    }
+                    
+                    @Override
+                    public String getDescription() {
+                        return "NES ROM Files (*.nes, *.nez)";
+                    }
+                });
+                
+                int result = fileChooser.showOpenDialog(parentFrame);
+                if (result == JFileChooser.APPROVE_OPTION) {
+                    File selectedFile = fileChooser.getSelectedFile();
+                    // Usar invokeLater para evitar bloqueios
+                    SwingUtilities.invokeLater(new Runnable() {
+                        public void run() {
+                        loadNewRom(selectedFile.getAbsolutePath());
+                        }
+                    });
+                }
             }
         });
         
-        int result = fileChooser.showOpenDialog(parentFrame);
-        if (result == JFileChooser.APPROVE_OPTION) {
-            File selectedFile = fileChooser.getSelectedFile();
-            loadNewRom(selectedFile.getAbsolutePath());
+    }catch (Exception e) {
+        e.printStackTrace();
+        JOptionPane.showMessageDialog(parentFrame, 
+            "Erro ao carregar ROM: " + e.getMessage(), 
+            "Erro", JOptionPane.ERROR_MESSAGE);
         }
+    
+
     }
    
 
@@ -373,38 +395,47 @@ public class RockmanForm extends Applet implements Runnable, ActionListener {
   
 
     public void init() {
-    System.gc();
-    // CONFIGURAÇÕES OTIMIZADAS PARA 60 FPS COM ÁUDIO
-    this.scale = true;
-    this.timeemulation = true;
-    this.fps = true;
-    this.stereo = true;
-    this.nicesound = true;
-    this.sound = true;
-    // Criar welcome.nes se não existir
-    File welcomeROM = new File("welcome.nes");
-    if (!welcomeROM.exists()) {
-        WelcomeROMCreator.createWelcomeROM();
-    }
-    // Inicializar GUI primeiro
-    gui = new UIApp(this);
-    gui.init(false);
-    // Obter referência do NES
-    jogo = gui.getNES();
-    // Configurar globais
-    Globals.appletMode = true;
-    Globals.memoryFlushValue = 0x00;
-    Globals.preferredFrameRate = 60;
-    Globals.frameTime = 1000000 / 60;
-    Globals.enableSound = true;
-    if (jogo != null) {
-        jogo.enableSound(sound);
-        jogo.setFramerate(60);
-        jogo.reset();
-    }
-    showWelcomeScreen = true;
-    romLoaded = false;
-    System.out.println("RockmanForm.init() - Inicialização completa");
+        // Garantir que está na EDT
+            if (!SwingUtilities.isEventDispatchThread()) {
+                SwingUtilities.invokeLater(new Runnable() {
+                    public void run() {
+                        init();
+                    }
+                });
+                return;
+            }
+            System.gc();
+            // CONFIGURAÇÕES OTIMIZADAS PARA 60 FPS COM ÁUDIO
+            this.scale = true;
+            this.timeemulation = true;
+            this.fps = true;
+            this.stereo = true;
+            this.nicesound = true;
+            this.sound = true;
+            // Criar welcome.nes se não existir
+            File welcomeROM = new File("welcome.nes");
+            if (!welcomeROM.exists()) {
+                WelcomeROMCreator.createWelcomeROM();
+            }
+            // Inicializar GUI primeiro
+            gui = new UIApp(this);
+            gui.init(false);
+            // Obter referência do NES
+            jogo = gui.getNES();
+            // Configurar globais
+            Globals.appletMode = true;
+            Globals.memoryFlushValue = 0x00;
+            Globals.preferredFrameRate = 60;
+            Globals.frameTime = 1000000 / 60;
+            Globals.enableSound = true;
+            if (jogo != null) {
+                jogo.enableSound(sound);
+                jogo.setFramerate(60);
+                jogo.reset();
+            }
+            showWelcomeScreen = true;
+            romLoaded = false;
+            System.out.println("RockmanForm.init() - Inicialização completa");
     }
 
 
