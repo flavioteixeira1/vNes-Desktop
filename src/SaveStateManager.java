@@ -100,12 +100,6 @@ public class SaveStateManager {
             System.err.println("SaveStateManager: NES é null, não é possível salvar.");
             return false;
         }
-
-        //ROM rom = nes.getRom();
-        //if (rom == null || !rom.isValid()) {
-        //    System.err.println("SaveStateManager: ROM inválida ou não carregada, abortando save.");
-        //    return false;
-        //}
         String romBase = getRomBaseNameSafe();
         String fileName = "savestate_" + romBase + ".dat";
         System.out.println(romBase);
@@ -172,10 +166,33 @@ public class SaveStateManager {
                 try {
                     saveStateName = buf.readString();
                     long timestamp = buf.readLong();
-                    System.out.println("Save state carregado: " + saveStateName);
+                    System.out.println("Save state carregado: " + saveStateName + " (gravado em " + timestamp + ")");
                 } catch (Exception e) {
                     System.out.println("Save state carregado (metadados ausentes)");
                 }
+                // Forçar atualização da UI / PPU
+                try {
+                        // Se a UI estiver disponível, forçar repaint imediato
+                        UI ui = nes.getGui();
+                        if (ui != null) {
+                            System.out.println("SaveStateManager: notificando GUI para redraw.");
+                            // método genérico: se existir um método para notificar imagem pronta, usá-lo.
+                            // Aqui usamos imageReady se estiver disponível; caso contrário, tente repaint na view.
+                            try {
+                                ui.getScreenView().repaint();
+                            } catch (Exception e) {
+                                // fallback: tentar notificar via método genérico
+                                try {
+                                    ui.getNES().getGui().imageReady(true);
+                                } catch (Exception ignore) {}
+                            }
+                        } else {
+                            System.out.println("SaveStateManager: UI nula, não é possível forçar repaint.");
+                        }
+                    } catch (Exception e) {
+                        System.err.println("Erro ao forçar redraw após loadState: " + e.getMessage());
+                        e.printStackTrace();
+                    }
                 if (wasRunning) {
                     try { Thread.sleep(100); } catch (InterruptedException ie) {}
                     nes.startEmulation();
