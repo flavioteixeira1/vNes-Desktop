@@ -4,7 +4,7 @@ public class SaveStateManager {
     private NES nes;
     private String saveStateName;
     private boolean saveStateExists;
-    
+  
     public SaveStateManager(NES nes) {
         this.nes = nes;
         this.saveStateName = "";
@@ -12,8 +12,79 @@ public class SaveStateManager {
         loadSaveStateInfo();
     }
 
+    
+
+    private String getRomBaseNameSafe() {
+        try {
+            if (nes == null) {
+                System.out.println("SaveStateManager: nes == null");
+                return "unknown";
+            }
+
+            // 1) Tentar pelo objeto ROM exposto (método existente ROM.getFileName())
+            ROM rom = nes.getRom();
+            if (rom != null) {
+                try {
+                    String romFile = rom.getFileName();
+                    System.out.println("SaveStateManager: rom.getFileName() -> " + romFile);
+                    if (romFile != null && !romFile.trim().isEmpty()) {
+                        int idx = romFile.lastIndexOf('.');
+                        String base = idx > 0 ? romFile.substring(0, idx) : romFile;
+                        base = base.replaceAll("[^a-zA-Z0-9._-]", "_");
+                        return base;
+                    }
+                } catch (Exception e) {
+                    System.out.println("SaveStateManager: rom.getFileName() lançou exceção: " + e.getMessage());
+                }
+            } else {
+                System.out.println("SaveStateManager: nes.getRom() == null");
+            }
+
+            // 2) Tentar pelo caminho armazenado no NES (romFile), usando getter seguro
+            try {
+                String romFilePath = nes.getRomFilePath();
+                System.out.println("SaveStateManager: nes.getRomFilePath() -> " + romFilePath);
+                if (romFilePath != null && !romFilePath.trim().isEmpty()) {
+                    java.io.File f = new java.io.File(romFilePath);
+                    String name = f.getName();
+                    if (name != null && !name.trim().isEmpty()) {
+                        int idx = name.lastIndexOf('.');
+                        String base = idx > 0 ? name.substring(0, idx) : name;
+                        base = base.replaceAll("[^a-zA-Z0-9._-]", "_");
+                        return base;
+                    }
+                }
+            } catch (Exception e) {
+                System.out.println("SaveStateManager: nes.getRomFilePath() lançou exceção: " + e.getMessage());
+            }
+
+            // 3) Tentar método auxiliar do NES (getRomFileNameSafe) se implementado
+            try {
+                String nameSafe = nes.getRomFileNameSafe();
+                System.out.println("SaveStateManager: nes.getRomFileNameSafe() -> " + nameSafe);
+                if (nameSafe != null && !nameSafe.trim().isEmpty()) {
+                    int idx = nameSafe.lastIndexOf('.');
+                    String base = idx > 0 ? nameSafe.substring(0, idx) : nameSafe;
+                    base = base.replaceAll("[^a-zA-Z0-9._-]", "_");
+                    return base;
+                }
+            } catch (Exception e) {
+                // ignore
+            }
+
+            // fallback
+            System.out.println("SaveStateManager: não conseguiu obter nome da ROM, retornando 'unknown'");
+            return "unknown";
+        } catch (Exception e) {
+            System.out.println("SaveStateManager: exceção em getRomBaseNameSafe: " + e.getMessage());
+            return "unknown";
+        }
+    }
+
+
+
     private String getRomBaseName() {
-        if (nes.getRom() == null || nes.getRom().getFileName() == null) return "unknown";
+        if (nes.getRom().getFileName() == null) return "unknown";
         String romName = nes.getRom().getFileName();
         int endIndex = romName.lastIndexOf('.');
         if (endIndex > 0) {
@@ -25,8 +96,21 @@ public class SaveStateManager {
     // Salva o estado em um arquivo usando parte do nome da ROM
     public boolean saveState(String customName) {
         System.out.println("chamando método saveState");
+        if (nes == null) {
+            System.err.println("SaveStateManager: NES é null, não é possível salvar.");
+            return false;
+        }
+
+        //ROM rom = nes.getRom();
+        //if (rom == null || !rom.isValid()) {
+        //    System.err.println("SaveStateManager: ROM inválida ou não carregada, abortando save.");
+        //    return false;
+        //}
+        String romBase = getRomBaseNameSafe();
+        String fileName = "savestate_" + romBase + ".dat";
+        System.out.println(romBase);
         try {
-            String fileName = "savestate_" + getRomBaseName() + ".dat";
+            
             FileOutputStream fos = new FileOutputStream(fileName);
 
             ByteBuffer buf = new ByteBuffer(1024 * 1024, ByteBuffer.BO_LITTLE_ENDIAN); // 1MB buffer
@@ -34,14 +118,14 @@ public class SaveStateManager {
             nes.stateSave(buf);
 
             // Metadados
-            buf.putString(customName != null ? customName : getRomBaseName());
+            buf.putString(customName != null ? customName : getRomBaseNameSafe());
             buf.putLong(System.currentTimeMillis());
 
             byte[] data = buf.getBytes();
             fos.write(data, 0, buf.getPos());
             fos.close();
 
-            saveStateName = customName != null ? customName : getRomBaseName();
+            saveStateName = customName != null ? customName : getRomBaseNameSafe();
             saveStateExists = true;
             saveSaveStateInfo();
             System.out.println("Save state salvo: " + saveStateName);
@@ -56,8 +140,16 @@ public class SaveStateManager {
     // Carrega o estado do arquivo atual, referente à ROM ativa
     public boolean loadState() {
         System.out.println("Chamando método loadState");
+        if (nes == null) {
+            System.err.println("SaveStateManager: NES é null, não é possível carregar.");
+            return false;
+        }
+
+        String romBase = getRomBaseNameSafe();
+        String fileName = "savestate_" + romBase + ".dat";
+        
         try {
-            String fileName = "savestate_" + getRomBaseName() + ".dat";
+            
             File file = new File(fileName);
             if (!file.exists()) {
                 System.err.println("Arquivo de save state não existe: " + fileName);
@@ -101,7 +193,7 @@ public class SaveStateManager {
     // Exclui o save state da ROM atual
     public boolean deleteState() {
         try {
-            String fileName = "savestate_" + getRomBaseName() + ".dat";
+            String fileName = "savestate_" + getRomBaseNameSafe() + ".dat";
             File file = new File(fileName);
             boolean deleted = file.delete();
             if (deleted) {

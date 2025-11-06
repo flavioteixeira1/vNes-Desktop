@@ -65,7 +65,8 @@ public class RockmanForm extends Applet implements Runnable, ActionListener {
     }
 
 
-   private String getSaveStateName() {
+  
+    private String getSaveStateName() {
             if (jogo != null && jogo.getSaveStateManager() != null) {
                 String name = jogo.getSaveStateManager().getStateName();
                 boolean exists = jogo.getSaveStateManager().stateExists();

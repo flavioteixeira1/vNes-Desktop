@@ -65,6 +65,12 @@ public class NES{
 		
 	}
 
+	//Return ROM name
+
+	public String getRomName(){
+		return this.romFile;
+	}
+
 	// Returns CPU object.
 	public CPU getCpu(){
 		return cpu;
@@ -103,8 +109,36 @@ public class NES{
 	
 	// Returns the currently loaded ROM.
 	public ROM getRom(){
-		return rom;
+		return this.rom;
 	}
+
+
+	public String getRomFilePath() {
+        try {
+            return this.romFile;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+	public String getRomFileNameSafe() {
+        try {
+            if (this.rom != null) {
+                try {
+                    String rn = this.rom.getFileName();
+                    if (rn != null && !rn.trim().isEmpty()) {
+                        return rn;
+                    }
+                } catch (Exception ignored) { }
+            }
+            if (this.romFile != null && !this.romFile.trim().isEmpty()) {
+                java.io.File f = new java.io.File(this.romFile);
+                String n = f.getName();
+                if (n != null && !n.trim().isEmpty()) return n;
+            }
+        } catch (Exception ignored) {}
+        return null;
+    }
 	
 	
 	// Returns the GUI.

@@ -22,6 +22,14 @@ public class UIApp implements UI{
 	public void initNES() {
 		System.out.println("UIApp.initNES() - Criando nova instância do NES");
 		nes = new NES(this);
+
+		// Se os KbInputHandlers já existirem, atualize a referência do NES neles
+		if (kbJoy1 != null) {
+			kbJoy1.setNES(nes);
+		}
+		if (kbJoy2 != null) {
+			kbJoy2.setNES(nes);
+		}
 		
 		// Inicializar componentes visuais se ainda não existirem
 		if (vScreen == null) {
@@ -202,19 +210,22 @@ public class UIApp implements UI{
 		
 		// 4.Criar nova instância do NES
 		initNES();
-		// 5. Reconfigurar o ScreenView com o novo NES
-			if (vScreen != null) {
+
+    	// 5. Reconfigurar o ScreenView com o novo NES
+		if (vScreen != null) {
 			System.out.println("Reconfigurando ScreenView com novo NES...");
 			vScreen.updateNESReference(nes);
-			
-			// Re-adicionar listeners
+
+			// Atualizar referência do NES nos handlers existentes antes de re-adicionar
 			if (kbJoy1 != null) {
+				kbJoy1.setNES(nes);
 				vScreen.addKeyListener(kbJoy1);
 			}
 			if (kbJoy2 != null) {
+				kbJoy2.setNES(nes);
 				vScreen.addKeyListener(kbJoy2);
 			}
-   		 }
+		}
 		// 6.Carregar ROM
 		boolean success = nes.loadRom(filePath);
 		if (success) {

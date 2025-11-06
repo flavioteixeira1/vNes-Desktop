@@ -15,6 +15,11 @@ public class KbInputHandler implements KeyListener, InputHandler {
         this.keyMapping = new int[InputHandler.NUM_KEYS];
     }
 
+    //permite atualizar a instância do NES quando o UI recriar o NES
+    public void setNES(NES nes) {
+        this.nes = nes;
+    }
+
     public short getKeyState(int padKey) {
         return (short) (allKeysState[keyMapping[padKey]] ? 0x41 : 0x40);
     }
