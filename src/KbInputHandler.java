@@ -11,8 +11,8 @@ public class KbInputHandler implements KeyListener, InputHandler {
     public KbInputHandler(NES nes, int id) {
         this.nes = nes;
         this.id = id;
-        allKeysState = new boolean[255];
-        keyMapping = new int[InputHandler.NUM_KEYS];
+        this.allKeysState = new boolean[255];
+        this.keyMapping = new int[InputHandler.NUM_KEYS];
     }
 
     public short getKeyState(int padKey) {
@@ -56,12 +56,34 @@ public class KbInputHandler implements KeyListener, InputHandler {
         if (id == 0) {
             switch (kc) {
                 case KeyEvent.VK_F5: {
-                    // Reset game:
-                    if (nes.isRunning()) {
-                        nes.stopEmulation();
-                        nes.reset();
-                        nes.reloadRom();
-                        nes.startEmulation();
+                     // Salvar estado (slot 0). Se sua API NES for diferente, ajuste a chamada.
+                    try {
+                        boolean sucesso;
+                        sucesso = nes.saveState(null);
+                        if (sucesso) {
+                            System.out.println("Save state salvo (F5) para ROM: " + (nes.getRom() != null ? nes.getRom().getFileName() : "unknown"));
+                        } else {
+                            System.err.println("Falha ao salvar save state (F5).");
+                        }
+                    } catch (Exception ex) {
+                        System.err.println("Erro ao executar save (F5): " + ex.getMessage());
+                        ex.printStackTrace();
+                    }
+                    break;
+                }
+                case KeyEvent.VK_F6: {
+                    // Carregar estado (slot 0).
+                    try {
+                        boolean sucesso;
+                        sucesso = nes.loadState();
+                        if (sucesso) {
+                            System.out.println("Save state carregado (F6) para ROM: " + (nes.getRom() != null ? nes.getRom().getFileName() : "unknown"));
+                        } else {
+                            System.err.println("Nenhum save state encontrado ou falha ao carregar (F6).");
+                        }
+                    } catch (Exception ex) {
+                        System.err.println("Erro ao executar load (F6): " + ex.getMessage());
+                        ex.printStackTrace();
                     }
                     break;
                 }
