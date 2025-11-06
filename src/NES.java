@@ -134,12 +134,13 @@ public class NES{
         return saveStateManager;
     }
     
-    public boolean saveState(int slot, String name) {
-        return saveStateManager.saveState(slot, name);
+    public boolean saveState(String name) {
+		
+        return saveStateManager.saveState(name);
     }
     
-    public boolean loadState(int slot) {
-        return saveStateManager.loadState(slot);
+    public boolean loadState() {
+        return saveStateManager.loadState();
     }
 	
 

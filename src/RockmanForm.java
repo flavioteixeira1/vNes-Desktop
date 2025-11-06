@@ -60,171 +60,19 @@ public class RockmanForm extends Applet implements Runnable, ActionListener {
             menuBar.add(fileMenu);
             parentFrame.setJMenuBar(menuBar);
 
-            saveStateMenu = new JMenu("Save States");
-
-             saveStateItems = new JMenuItem[10];
-            for (int i = 0; i < 10; i++) {
-                final int slot = i;
-                saveStateItems[i] = new JMenuItem((i + 1) + ": " + getSaveStateName(i));
-                saveStateItems[i].addActionListener(new ActionListener() {
-                    public void actionPerformed(ActionEvent e) {
-                        loadSaveState(slot);
-                    }
-                });
-                saveStateMenu.add(saveStateItems[i]);
-            }
             
-            saveStateMenu.addSeparator();
-            
-            // Salvar estado com nome personalizado
-            saveStateWithNameItem = new JMenuItem("Salvar Estado com Nome...");
-            saveStateWithNameItem.addActionListener(new ActionListener() {
-                public void actionPerformed(ActionEvent e) {
-                    showSaveStateWithNameDialog();
-                }
-            });
-            saveStateMenu.add(saveStateWithNameItem);
-            
-            // Carregar estado
-            loadStateItem = new JMenuItem("Carregar Estado...");
-            loadStateItem.addActionListener(new ActionListener() {
-                public void actionPerformed(ActionEvent e) {
-                    showLoadStateDialog();
-                }
-            });
-            saveStateMenu.add(loadStateItem);
-            
-            menuBar.add(fileMenu);
-            menuBar.add(saveStateMenu);
-            parentFrame.setJMenuBar(menuBar);
-            
-            updateSaveStateMenu();
-        
-
         }
     }
 
 
-    private String getSaveStateName(int slot) {
+   private String getSaveStateName() {
             if (jogo != null && jogo.getSaveStateManager() != null) {
-                String name = jogo.getSaveStateManager().getStateName(slot);
-                boolean exists = jogo.getSaveStateManager().stateExists(slot);
-                return exists ? name : "[Vazio] " + name;
+                String name = jogo.getSaveStateManager().getStateName();
+                boolean exists = jogo.getSaveStateManager().stateExists();
+                return exists ? name : "[Sem save]";
             }
-            return "[Vazio] Save State " + (slot + 1);
+            return "[Sem save]"; 
         }
-
-     private void updateSaveStateMenu() {
-            if (saveStateItems != null && jogo != null && jogo.getSaveStateManager() != null) {
-                for (int i = 0; i < 10; i++) {
-                    saveStateItems[i].setText((i + 1) + ": " + getSaveStateName(i));
-                }
-            }
-        }
-
-    private void loadSaveState(int slot) {
-            if (jogo != null && jogo.loadState(slot)) {
-                JOptionPane.showMessageDialog(parentFrame, 
-                    "Estado carregado do slot " + (slot + 1) + ": " + 
-                    jogo.getSaveStateManager().getStateName(slot),
-                    "Estado Carregado", JOptionPane.INFORMATION_MESSAGE);
-            } else {
-                JOptionPane.showMessageDialog(parentFrame,
-                    "Erro ao carregar estado do slot " + (slot + 1),
-                    "Erro", JOptionPane.ERROR_MESSAGE);
-            }
-        }
-
-    
-    private void showSaveStateWithNameDialog() {
-                if (jogo == null) return;
-                
-                // Diálogo para selecionar slot
-                String[] slotOptions = new String[10];
-                for (int i = 0; i < 10; i++) {
-                    slotOptions[i] = "Slot " + (i + 1) + " - " + getSaveStateName(i);
-                }
-                
-                String slotChoice = (String) JOptionPane.showInputDialog(parentFrame,
-                    "Selecione o slot para salvar:",
-                    "Salvar Estado",
-                    JOptionPane.QUESTION_MESSAGE,
-                    null,
-                    slotOptions,
-                    slotOptions[0]);
-                
-                if (slotChoice != null) {
-                    int slot = -1;
-                    for (int i = 0; i < 10; i++) {
-                        if (slotOptions[i].equals(slotChoice)) {
-                            slot = i;
-                            break;
-                        }
-                    }
-                    
-                    if (slot != -1) {
-                        // Diálogo para nome personalizado
-                        String currentName = jogo.getSaveStateManager().getStateName(slot);
-                        String customName = JOptionPane.showInputDialog(parentFrame,
-                            "Digite um nome para o save state:",
-                            currentName);
-                        
-                        if (customName != null && !customName.trim().isEmpty()) {
-                            if (jogo.saveState(slot, customName.trim())) {
-                                JOptionPane.showMessageDialog(parentFrame,
-                                    "Estado salvo no slot " + (slot + 1) + ": " + customName,
-                                    "Estado Salvo", JOptionPane.INFORMATION_MESSAGE);
-                                updateSaveStateMenu();
-                            } else {
-                                JOptionPane.showMessageDialog(parentFrame,
-                                    "Erro ao salvar estado",
-                                    "Erro", JOptionPane.ERROR_MESSAGE);
-                            }
-                        }
-                    }
-                }
-            }
-
-    
-    private void showLoadStateDialog() {
-                if (jogo == null) return;
-                
-                // Listar apenas slots que existem
-                java.util.List<String> availableSlots = new ArrayList<>();
-                java.util.List<Integer> slotNumbers = new ArrayList<>();
-                
-                for (int i = 0; i < 10; i++) {
-                    if (jogo.getSaveStateManager().stateExists(i)) {
-                        availableSlots.add("Slot " + (i + 1) + ": " + jogo.getSaveStateManager().getStateName(i));
-                        slotNumbers.add(i);
-                    }
-                }
-                
-                if (availableSlots.isEmpty()) {
-                    JOptionPane.showMessageDialog(parentFrame,
-                        "Nenhum save state encontrado",
-                        "Aviso", JOptionPane.WARNING_MESSAGE);
-                    return;
-                }
-                
-                String[] slotArray = availableSlots.toArray(new String[0]);
-                String slotChoice = (String) JOptionPane.showInputDialog(parentFrame,
-                    "Selecione o estado para carregar:",
-                    "Carregar Estado",
-                    JOptionPane.QUESTION_MESSAGE,
-                    null,
-                    slotArray,
-                    slotArray[0]);
-                
-                if (slotChoice != null) {
-                    for (int i = 0; i < availableSlots.size(); i++) {
-                        if (slotArray[i].equals(slotChoice)) {
-                            loadSaveState(slotNumbers.get(i));
-                            break;
-                        }
-                    }
-                }
-            }
 
         
     
@@ -237,24 +85,33 @@ public class RockmanForm extends Applet implements Runnable, ActionListener {
 
     public void keyPressed(KeyEvent e) {
             int keyCode = e.getKeyCode();
-            // F1-F10: Salvar estados
-            if (keyCode >= KeyEvent.VK_F1 && keyCode <= KeyEvent.VK_F10 && e.isControlDown()) {
-                int slot = keyCode - KeyEvent.VK_F1;
+            // F5 - Salvar estado
+            if (e.getKeyCode() == KeyEvent.VK_F5) {
+                // Salvar o save state na ROM ativa
                 if (jogo != null) {
-                    String currentName = jogo.getSaveStateManager().getStateName(slot);
-                    jogo.saveState(slot, currentName);
-                    System.out.println("Estado salvo rapidamente no slot " + (slot + 1));
+                    boolean sucesso = jogo.saveState(null); // Nome automático, pode substituir por string
+                    if (sucesso) {
+                        JOptionPane.showMessageDialog(parentFrame, "Save state salvo para " + jogo.getSaveStateManager().getStateName());
+                    } else {
+                        JOptionPane.showMessageDialog(parentFrame, "Erro ao salvar o save state!");
+                    }
                 }
             }
-            // F1-F10: Carregar estados
-            else if (keyCode >= KeyEvent.VK_F1 && keyCode <= KeyEvent.VK_F10) {
-                int slot = keyCode - KeyEvent.VK_F1;
-                if (jogo != null && jogo.getSaveStateManager().stateExists(slot)) {
-                    jogo.loadState(slot);
-                    System.out.println("Estado carregado rapidamente do slot " + (slot + 1));
+            if (e.getKeyCode() == KeyEvent.VK_F6) {
+                // Carregar save state da ROM ativa
+                if (jogo != null) {
+                    boolean sucesso = jogo.loadState();
+                    if (sucesso) {
+                        JOptionPane.showMessageDialog(parentFrame, "Save state carregado para " + jogo.getSaveStateManager().getStateName());
+                    } else {
+                        JOptionPane.showMessageDialog(parentFrame, "Nenhum save state encontrado para esta ROM.");
+                    }
                 }
             }
+
         }
+    
+
 
 
     private void loadRomFromFile() {
