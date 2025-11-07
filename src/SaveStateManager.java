@@ -170,6 +170,51 @@ public class SaveStateManager {
                 } catch (Exception e) {
                     System.out.println("Save state carregado (metadados ausentes)");
                 }
+                // ----- Diagnóstico extra: inspecionar PC e memória ao redor -----
+    try {
+        CPU cpu = nes.getCpu();
+        int pc = -1;
+        if (cpu != null) {
+            try {
+                pc = cpu.getPC();
+            } catch (Throwable t) {
+                pc = -1;
+            }
+        }
+        System.out.println("DEBUG: CPU.getPC() -> " + pc);
+
+        if (pc >= 0) {
+            // Mostrar 16 bytes a partir do PC
+            StringBuilder sb = new StringBuilder();
+            sb.append(String.format("DEBUG: mem[@%04X..+15]:", pc));
+            for (int i = 0; i < 16; i++) {
+                int addr = (pc + i) & 0xFFFF;
+                int b = nes.getMemoryByte(addr);
+                sb.append(String.format(" %02X", b >= 0 ? b : 0));
+            }
+            System.out.println(sb.toString());
+
+            // Verificar se o opcode em PC é conhecido (usa CpuInfo)
+                        try {
+                            int opcode = nes.getMemoryByte(pc);
+                            int[] opdata = CpuInfo.getOpData(); // retorna tabela de opcodes
+                            boolean valid = false;
+                            if (opcode >= 0 && opcode < 256 && opdata != null) {
+                                valid = (opdata[opcode] != 0xFF);
+                            }
+                            System.out.println(String.format("DEBUG: opcode at PC = 0x%02X (%s)", opcode,
+                                    valid ? "valid" : "INVALID"));
+                        } catch (Throwable t) {
+                            System.out.println("DEBUG: não foi possível verificar opcode (ex: classe CpuInfo inacessível)");
+                        }
+                    } else {
+                        System.out.println("DEBUG: PC inválido, não é possível inspecionar memória.");
+                    }
+                } catch (Exception e) {
+                    System.err.println("Erro ao rodar diagnósticos pós-load: " + e.getMessage());
+                    e.printStackTrace();
+                }
+                // ----- fim do diagnóstico -----
                 // Forçar atualização da UI / PPU
                 try {
                         // Se a UI estiver disponível, forçar repaint imediato
