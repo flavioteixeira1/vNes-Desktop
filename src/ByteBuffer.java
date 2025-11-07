@@ -430,8 +430,8 @@ public class ByteBuffer{
 		return readByte(pos)==1;
 	}
 	
-	public short readByte() throws ArrayIndexOutOfBoundsException{
-		short ret = readByte(curPos);
+	public byte readByte() throws ArrayIndexOutOfBoundsException{
+		byte ret = (byte) readByte(curPos);
 		move(1);
 		return ret;
 	}

@@ -36,29 +36,29 @@ public class MapperDefault implements MemoryMapper {
     }
      // Carrega o estado do mapper (deve espelhar exatamente stateSave)
     public void stateLoad(ByteBuffer buf) {
-
+        byte mapperVersion = buf.readByte();
+        System.out.println("MapperDefault.stateLoad: versão do mapper = " + mapperVersion);
         // Check version:
-        if (buf.readByte() == 1) {
-            // Ler campos comuns
-            // Joypad stuff:
-            joy1StrobeState = buf.readInt();
-            joy2StrobeState = buf.readInt();
-            joypadLastWrite = buf.readInt();
-            // Delegar para implementação específica do mapper
-            // Mapper specific stuff:
-            mapperInternalStateLoad(buf);
-
+        if (mapperVersion == 1) {
+        // Ler campos comuns do mapper
+        joy1StrobeState = buf.readInt();
+        joy2StrobeState = buf.readInt();
+        joypadLastWrite = buf.readInt();
+        
+        // Delegar para implementação específica do mapper
+        mapperInternalStateLoad(buf);
         } else {
-            // Versão desconhecida: opcionalmente lançar/registrar
-            System.out.println("MapperDefault.stateLoad: versão desconhecida");
-        }
+            System.out.println("MapperDefault.stateLoad: versão desconhecida: " + mapperVersion);
+            }
 
     }
 
     public void stateSave(ByteBuffer buf) {
 
         // Version:
-        buf.putByte((short) 1);
+        buf.putByte((byte) 1);
+        buf.putInt(0x12345678);  // Magic number para validação
+
         // Campos comuns (joypad/estado)
         // Joypad stuff:
         buf.putInt(joy1StrobeState);

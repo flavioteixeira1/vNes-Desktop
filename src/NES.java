@@ -253,8 +253,6 @@ public class NES{
 					}
 
 					// 2) Restaurar memórias do CPU/PPU e CPU
-					System.out.println("NES.stateLoad: carregando cpuMem...");
-					cpuMem.stateLoad(buf);
 
 					System.out.println("NES.stateLoad: carregando ppuMem...");
 					ppuMem.stateLoad(buf);
@@ -262,9 +260,13 @@ public class NES{
 					System.out.println("NES.stateLoad: carregando sprMem...");
 					sprMem.stateLoad(buf);
 
+					System.out.println("NES.stateLoad: carregando cpuMem...");
+					cpuMem.stateLoad(buf);
+
 					System.out.println("NES.stateLoad: carregando cpu...");
 					cpu.stateLoad(buf);
 
+					
 					// 3) Restaurar PPU (depois que mapper e memórias estejam consistentes)
 					System.out.println("NES.stateLoad: carregando PPU...");
 					ppu.stateLoad(buf);
