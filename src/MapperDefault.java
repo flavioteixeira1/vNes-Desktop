@@ -11,7 +11,7 @@ public class MapperDefault implements MemoryMapper {
     public int cpuMemSize;
     public int joy1StrobeState = 0;
     public int joy2StrobeState = 0;
-    public int joypadLastWrite = 0;
+    public int joypadLastWrite = -1;
     public boolean mousePressed;
     public boolean gameGenieActive = false;
     public int mouseX;

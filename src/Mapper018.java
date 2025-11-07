@@ -26,7 +26,7 @@ public class Mapper018 extends MapperDefault {
     }
 
     public void mapperInternalStateSave(ByteBuffer buf) {
-        super.mapperInternalStateLoad(buf);
+        super.mapperInternalStateSave(buf);
 
         // Version:
         buf.putByte((short) 1);
