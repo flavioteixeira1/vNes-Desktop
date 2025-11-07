@@ -90,7 +90,7 @@ public class RockmanForm extends Applet implements Runnable, ActionListener {
             if (e.getKeyCode() == KeyEvent.VK_F5) {
                 // Salvar o save state na ROM ativa
                 if (jogo != null) {
-                    boolean sucesso = jogo.saveState(null); // Nome automático, pode substituir por string
+                    boolean sucesso = jogo.saveState("save"); 
                     if (sucesso) {
                         JOptionPane.showMessageDialog(parentFrame, "Save state salvo para " + jogo.getSaveStateManager().getStateName());
                     } else {
@@ -98,6 +98,7 @@ public class RockmanForm extends Applet implements Runnable, ActionListener {
                     }
                 }
             }
+            //F6 - carregar estado
             if (e.getKeyCode() == KeyEvent.VK_F6) {
                 // Carregar save state da ROM ativa
                 if (jogo != null) {
@@ -108,6 +109,11 @@ public class RockmanForm extends Applet implements Runnable, ActionListener {
                         JOptionPane.showMessageDialog(parentFrame, "Nenhum save state encontrado para esta ROM.");
                     }
                 }
+            }
+            //Carregar rom
+            if (e.getKeyCode() == KeyEvent.VK_F2) {
+            
+            this.loadRomFromFile();
             }
 
         }

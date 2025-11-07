@@ -92,6 +92,11 @@ public class KbInputHandler implements KeyListener, InputHandler {
                     }
                     break;
                 }
+                case KeyEvent.VK_F2: {
+                    //System.out.println("f2 pressionada");
+                    
+                    }
+                    break;
                 case KeyEvent.VK_F10: {
                     // Just using this to display the battery RAM contents to user.
                     if (nes.rom != null) {
