@@ -329,6 +329,46 @@ public class UIApp implements UI{
 		}
 	}
 
+
+	public void testInputs() {
+		System.out.println("=== TESTE AVANÇADO DE CONTROLES ===");
+		
+		if (inputManager != null) {
+			InputHandler handler1 = inputManager.getPlayerHandler(InputManager.PLAYER_1);
+			InputHandler handler2 = inputManager.getPlayerHandler(InputManager.PLAYER_2);
+			
+			System.out.println("Player 1: " + (handler1 != null ? handler1.getInputType() : "NULL"));
+			System.out.println("Player 2: " + (handler2 != null ? handler2.getInputType() : "NULL"));
+			
+			// Testar todos os botões
+			if (handler1 instanceof KbInputHandler) {
+				((KbInputHandler) handler1).printKeyMappings();
+				
+				int[] testKeys = {
+					InputHandler.KEY_A, InputHandler.KEY_B, InputHandler.KEY_START, 
+					InputHandler.KEY_SELECT, InputHandler.KEY_UP, InputHandler.KEY_DOWN,
+					InputHandler.KEY_LEFT, InputHandler.KEY_RIGHT
+				};
+				String[] keyNames = {"A", "B", "START", "SELECT", "UP", "DOWN", "LEFT", "RIGHT"};
+				
+				for (int i = 0; i < testKeys.length; i++) {
+					short state = handler1.getKeyState(testKeys[i]);
+					System.out.println("P1 - " + keyNames[i] + ": " + state + " (" + 
+									(state == 0x41 ? "PRESSED" : "NOT PRESSED") + ")");
+				}
+			}
+		}
+		
+		// Verificar foco
+		if (vScreen != null) {
+			System.out.println("ScreenView tem foco: " + vScreen.hasFocus());
+			System.out.println("ScreenView é focusable: " + vScreen.isFocusable());
+		}
+		
+		System.out.println("=== FIM DO TESTE ===");
+	}
+
+
 	public NES getNES(){
 		return nes;
 	}

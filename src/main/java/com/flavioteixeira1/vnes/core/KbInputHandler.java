@@ -2,6 +2,7 @@ package com.flavioteixeira1.vnes.core;
 
 
 import java.awt.event.*;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -17,9 +18,13 @@ public class KbInputHandler implements KeyListener, InputHandler {
     public KbInputHandler(NES nes, int id) {
         this.nes = nes;
         this.id = id;
-        this.allKeysState = new boolean[255];
+        this.allKeysState = new boolean[512]; // Aumentado para cobrir todas teclas
         this.keyMapping = new int[InputHandler.NUM_KEYS];
         this.currentKeyBindings = new HashMap<>();
+        // Inicializar arrays com valores padrão
+        Arrays.fill(allKeysState, false);
+        Arrays.fill(keyMapping, 0); // 0 = tecla não mapeada
+        System.out.println("KbInputHandler criado para Player " + id);
     }
 
     //permite atualizar a instância do NES quando o UI recriar o NES
@@ -27,10 +32,45 @@ public class KbInputHandler implements KeyListener, InputHandler {
         this.nes = nes;
     }
 
+    @Override
     public short getKeyState(int padKey) {
-        return (short) (allKeysState[keyMapping[padKey]] ? 0x41 : 0x40);
+            if (padKey < 0 || padKey >= keyMapping.length) {
+                System.out.println("getKeyState - PadKey inválido: " + padKey);
+                return 0x40; // Não pressionado
+            }
+            
+            int keyCode = keyMapping[padKey];
+            if (keyCode < 0 || keyCode >= allKeysState.length) {
+                System.out.println("getKeyState - KeyCode inválido: " + keyCode + " para padKey: " + padKey);
+                return 0x40; // Não pressionado
+            }
+            
+            boolean isPressed = allKeysState[keyCode];
+            short result = (short) (isPressed ? 0x41 : 0x40);
+            
+            // Debug: mostrar apenas quando pressionado para não poluir o console
+            if (isPressed) {
+                System.out.println("KEY PRESSED - Player: " + id + ", PadKey: " + padKey + 
+                                ", KeyCode: " + keyCode + ", Result: " + result);
+            }
+            
+            return result;
     }
 
+
+    public void printKeyMappings() {
+        System.out.println("=== MAPEAMENTOS DO PLAYER " + id + " ===");
+        String[] keyNames = {"A", "B", "START", "SELECT", "UP", "DOWN", "LEFT", "RIGHT"};
+        for (int i = 0; i < keyMapping.length; i++) {
+            if (i < keyNames.length) {
+                System.out.println(keyNames[i] + " -> KeyCode: " + keyMapping[i] + 
+                                " (" + KeyEvent.getKeyText(keyMapping[i]) + ")");
+            }
+        }
+        System.out.println("=== FIM MAPEAMENTOS ===");
+    }
+
+    
     public void mapKey(int padKey, int kbKeycode) {
         keyMapping[padKey] = kbKeycode;
     }
@@ -38,6 +78,11 @@ public class KbInputHandler implements KeyListener, InputHandler {
     public void keyPressed(KeyEvent ke) {
 
         int kc = ke.getKeyCode();
+
+        // Debug
+        System.out.println("KEY PRESSED - Player: " + id + ", KeyCode: " + kc +" (" + KeyEvent.getKeyText(kc) + ")");
+
+
         if (kc >= allKeysState.length) {
             return;
         }
@@ -59,6 +104,9 @@ public class KbInputHandler implements KeyListener, InputHandler {
     public void keyReleased(KeyEvent ke) {
 
         int kc = ke.getKeyCode();
+        // Debug
+        System.out.println("KEY RELEASED - Player: " + id + ", KeyCode: " + kc +" (" + KeyEvent.getKeyText(kc) + ")");
+
         if (kc >= allKeysState.length) {
             return;
         }

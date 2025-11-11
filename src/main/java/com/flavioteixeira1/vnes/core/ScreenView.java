@@ -32,6 +32,13 @@ public class ScreenView extends BufferView{
         }
     }
 
+	public void removeAllKeyListeners() {
+    	KeyListener[] listeners = getKeyListeners();
+			for (KeyListener listener : listeners) {
+				removeKeyListener(listener);
+			}
+		}
+
 
 
 	private class MyMouseAdapter extends MouseAdapter{
@@ -118,22 +125,16 @@ public class ScreenView extends BufferView{
 				System.err.println("Erro em imageReady: " + e.getMessage());
 			}
 
-		/*
-		if(!Globals.focused){
-       		setFocusable(true);
-		requestFocus();
-        	Globals.focused = true;
-       		}
-
-		// Draw image first:
-		super.imageReady(skipFrame);
-		
-		// Notify GUI, so it can write the sound buffer:
-		if(notifyImageReady){
-			nes.getGui().imageReady(skipFrame);
-		}
-		 */
-
 	}
+
+
+	@Override
+	public void addNotify() {
+    super.addNotify();
+    System.out.println("ScreenView - Componente adicionado à hierarquia, solicitando foco...");
+    this.setFocusable(true);
+    this.requestFocusInWindow();
+	}
+
 		
 }

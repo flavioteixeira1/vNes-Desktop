@@ -377,6 +377,9 @@ public class JoystickConfigDialog extends JDialog {
                         e.printStackTrace();
                     }
                     
+                    // 6.1 Testar controles
+                    gui.testInputs();
+
                     // 7. Configurar propriedades
                     Globals.timeEmulation = timeemulation;
                     if (jogo.ppu != null) {
@@ -390,7 +393,8 @@ public class JoystickConfigDialog extends JDialog {
                     System.out.println("ScreenView: " + (panelScreen != null ? "OK" : "NULL"));
                     System.out.println("Buffer: " + (jogo != null && jogo.getPpu() != null && jogo.getPpu().buffer != null ? "OK" : "NULL"));
                     System.out.println("=========================");
-                    
+                    gui.testInputs();
+
                     // 9. AGORA iniciar emulação
                     System.out.println("Iniciando emulação...");
                     jogo.startEmulation();
@@ -463,7 +467,7 @@ public class JoystickConfigDialog extends JDialog {
         panelScreen = (ScreenView) gui.getScreenView();
         panelScreen.setFPSEnabled(fps);
         
-        this.setLayout(null);
+        this.setLayout(new BorderLayout()); // Usar BorderLayout
         
         if (scale) {
             if (scanlines) {
@@ -480,17 +484,30 @@ public class JoystickConfigDialog extends JDialog {
         }
         
         this.setIgnoreRepaint(true);
-        this.add(panelScreen);
+        this.add(panelScreen, BorderLayout.CENTER);
         
         // Forçar o componente a ser visível e focado
         panelScreen.setVisible(true);
         panelScreen.setFocusable(true);
-        panelScreen.requestFocus();
+        //panelScreen.requestFocus();
+        panelScreen.requestFocusInWindow();
+
+        // Timer para garantir foco após renderização
+        Timer focusTimer = new Timer(500, e -> {
+            System.out.println("Forçando foco no ScreenView...");
+            panelScreen.requestFocusInWindow();
+            if (!panelScreen.hasFocus()) {
+                System.out.println("AVISO: ScreenView ainda não tem foco!");
+            }
+        });
+        focusTimer.setRepeats(false);
+        focusTimer.start();
         
         this.validate();
         this.repaint();
         
-        System.out.println("ScreenView adicionado com sucesso");
+         System.out.println("ScreenView adicionado - Focusable: " + panelScreen.isFocusable() + 
+                      ", HasFocus: " + panelScreen.hasFocus());
     }
 
     public void start() {

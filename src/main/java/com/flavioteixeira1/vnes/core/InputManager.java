@@ -101,6 +101,16 @@ public class InputManager {
         }
 
     }
+
+    public void updateNESReference(NES nes) {
+    System.out.println("InputManager - Atualizando referência do NES");
+    
+        for (int i = 0; i < playerHandlers.length; i++) {
+            if (playerHandlers[i] instanceof KbInputHandler) {
+                ((KbInputHandler) playerHandlers[i]).setNES(nes);
+            }
+        }
+    }
     
     
     
