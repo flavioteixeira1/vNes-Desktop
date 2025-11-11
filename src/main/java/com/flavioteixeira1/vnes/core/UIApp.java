@@ -13,6 +13,7 @@ public class UIApp implements UI{
 	JoystickInputHandler joystickInputHandler;
 	ScreenView vScreen;
 	HiResTimer timer;
+	private InputManager inputManager;
 	
 	long t1,t2;
 	int sleepTime;
@@ -25,6 +26,12 @@ public class UIApp implements UI{
 	public void initNES() {
 		System.out.println("UIApp.initNES() - Criando nova instância do NES");
 		nes = new NES(this);
+
+		// Inicializar gerenciador de inputs
+		inputManager = new InputManager(nes);
+
+		// Configuração padrão: Player 1 = Teclado
+        setupDefaultInputs();
 
 		// Se os KbInputHandlers já existirem, atualize a referência do NES neles
 		if (kbJoy1 != null) {
@@ -42,6 +49,35 @@ public class UIApp implements UI{
 			vScreen.updateNESReference(nes);
 		}
 	}
+
+	private void setupDefaultInputs() {
+        // Player 1: Teclado (configuração padrão)
+        KbInputHandler kbHandler = (KbInputHandler) inputManager.getPlayerHandler(InputManager.PLAYER_1);
+        
+        // Map keyboard input keys for joypad 1:
+        kbHandler.mapKey(InputHandler.KEY_A, KeyEvent.VK_X);
+        kbHandler.mapKey(InputHandler.KEY_B, KeyEvent.VK_Z);
+        kbHandler.mapKey(InputHandler.KEY_START, KeyEvent.VK_ENTER);
+        kbHandler.mapKey(InputHandler.KEY_SELECT, KeyEvent.VK_CONTROL);
+        kbHandler.mapKey(InputHandler.KEY_UP, KeyEvent.VK_UP);
+        kbHandler.mapKey(InputHandler.KEY_DOWN, KeyEvent.VK_DOWN);
+        kbHandler.mapKey(InputHandler.KEY_LEFT, KeyEvent.VK_LEFT);
+        kbHandler.mapKey(InputHandler.KEY_RIGHT, KeyEvent.VK_RIGHT);
+        
+        // Player 2: Teclado numérico
+        inputManager.setPlayerHandler(InputManager.PLAYER_2, InputConfig.HANDLER_KEYBOARD, nes);
+        KbInputHandler kbHandler2 = (KbInputHandler) inputManager.getPlayerHandler(InputManager.PLAYER_2);
+        
+        kbHandler2.mapKey(InputHandler.KEY_A, KeyEvent.VK_NUMPAD7);
+        kbHandler2.mapKey(InputHandler.KEY_B, KeyEvent.VK_NUMPAD9);
+        kbHandler2.mapKey(InputHandler.KEY_START, KeyEvent.VK_NUMPAD1);
+        kbHandler2.mapKey(InputHandler.KEY_SELECT, KeyEvent.VK_NUMPAD3);
+        kbHandler2.mapKey(InputHandler.KEY_UP, KeyEvent.VK_NUMPAD8);
+        kbHandler2.mapKey(InputHandler.KEY_DOWN, KeyEvent.VK_NUMPAD2);
+        kbHandler2.mapKey(InputHandler.KEY_LEFT, KeyEvent.VK_NUMPAD4);
+        kbHandler2.mapKey(InputHandler.KEY_RIGHT, KeyEvent.VK_NUMPAD6);
+    }
+	
 	
 	public void initVisualComponents() {
 		System.out.println("UIApp.initVisualComponents() - Inicializando componentes visuais");
@@ -66,27 +102,22 @@ public class UIApp implements UI{
 			kbJoy1.mapKey(InputHandler.KEY_RIGHT, KeyEvent.VK_RIGHT);
 			
 			if (vScreen != null) {
-				vScreen.addKeyListener(kbJoy1);
+			InputHandler handler1 = inputManager.getPlayerHandler(InputManager.PLAYER_1);
+            InputHandler handler2 = inputManager.getPlayerHandler(InputManager.PLAYER_2);
+            
+            if (handler1 instanceof KeyListener) {
+                vScreen.addKeyListener((KeyListener) handler1);
+            }
+            if (handler2 instanceof KeyListener) {
+                vScreen.addKeyListener((KeyListener) handler2);
+            }
+        }
 			}
-		}
-		
-		if (kbJoy2 == null) {
-			kbJoy2 = new KbInputHandler(nes, 1);
-			// Map keyboard input keys for joypad 2:
-			kbJoy2.mapKey(InputHandler.KEY_A, KeyEvent.VK_NUMPAD7);
-			kbJoy2.mapKey(InputHandler.KEY_B, KeyEvent.VK_NUMPAD9);
-			kbJoy2.mapKey(InputHandler.KEY_START, KeyEvent.VK_NUMPAD1);
-			kbJoy2.mapKey(InputHandler.KEY_SELECT, KeyEvent.VK_NUMPAD3);
-			kbJoy2.mapKey(InputHandler.KEY_UP, KeyEvent.VK_NUMPAD8);
-			kbJoy2.mapKey(InputHandler.KEY_DOWN, KeyEvent.VK_NUMPAD2);
-			kbJoy2.mapKey(InputHandler.KEY_LEFT, KeyEvent.VK_NUMPAD4);
-			kbJoy2.mapKey(InputHandler.KEY_RIGHT, KeyEvent.VK_NUMPAD6);
-			
-			if (vScreen != null) {
-				vScreen.addKeyListener(kbJoy2);
-			}
-		}
 	}
+
+	
+		
+		
 	
 	public void init(boolean showGui){
 		// Criar primeira instância do NES
@@ -95,14 +126,11 @@ public class UIApp implements UI{
 	}
 
 	public void updateGameControls() {
-        // Atualiza ambos os handlers
-        kbJoy1.update();
-		kbJoy2.update();
-        
-        if (joystickInputHandler.isConnected()) {
-            joystickInputHandler.update();
+        if (inputManager != null) {
+            inputManager.update();
         }
     }
+	
 
 	public boolean isKeyPressed(int keyCode) {
         // Verifica ambos: teclado SEMPRE tem prioridade? Ou ambos funcionam?
@@ -305,13 +333,19 @@ public class UIApp implements UI{
 		return nes;
 	}
 	
-	public InputHandler getJoy1(){
-		return kbJoy1;
-	}
-	
-	public InputHandler getJoy2(){
-		return kbJoy2;
-	}
+	public InputHandler getJoy1() {
+        return inputManager != null ? inputManager.getPlayerHandler(InputManager.PLAYER_1) : null;
+    }
+    
+    public InputHandler getJoy2() {
+        return inputManager != null ? inputManager.getPlayerHandler(InputManager.PLAYER_2) : null;
+    }
+
+	// Novo método para obter o gerenciador de inputs
+    public InputManager getInputManager() {
+        return inputManager;
+    }
+
 	
 	public BufferView getScreenView(){
 		return vScreen;

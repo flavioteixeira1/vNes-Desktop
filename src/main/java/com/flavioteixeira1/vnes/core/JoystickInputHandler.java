@@ -9,6 +9,7 @@ import net.java.games.input.*;
 public class JoystickInputHandler implements InputHandler {
     private Map<Integer, Boolean> buttonStates;
     private Map<Integer, Integer> keyBindings;
+    private Map<Integer, Integer> keyMapping; // Mapeamento de botões do NES para botões do joystick
     private Controller joystick;
     private boolean initialized;
     
@@ -37,7 +38,9 @@ public class JoystickInputHandler implements InputHandler {
     public JoystickInputHandler() {
         buttonStates = new HashMap<>();
         keyBindings = new HashMap<>();
+        keyMapping = new HashMap<>(); // Inicializar o mapeamento
         initializeDefaultBindings();
+        initializeDefaultMappings(); // Novo método para mapeamentos padrão
         initializeJoystick();
     }
     
@@ -59,6 +62,20 @@ public class JoystickInputHandler implements InputHandler {
         keyBindings.put(HAT_RIGHT, KeyEvent.VK_RIGHT); // Hat Direita
     }
     
+    private void initializeDefaultMappings() {
+        // Mapeamentos padrão: botões do NES para botões do joystick
+        keyMapping.put(InputHandler.KEY_A, BUTTON_0);
+        keyMapping.put(InputHandler.KEY_B, BUTTON_1);
+        keyMapping.put(InputHandler.KEY_START, BUTTON_6);
+        keyMapping.put(InputHandler.KEY_SELECT, BUTTON_7);
+        keyMapping.put(InputHandler.KEY_UP, AXIS_UP);
+        keyMapping.put(InputHandler.KEY_DOWN, AXIS_DOWN);
+        keyMapping.put(InputHandler.KEY_LEFT, AXIS_LEFT);
+        keyMapping.put(InputHandler.KEY_RIGHT, AXIS_RIGHT);
+    }
+
+
+
     private void initializeJoystick() {
         try {
             ControllerEnvironment env = ControllerEnvironment.getDefaultEnvironment();
@@ -262,13 +279,16 @@ public class JoystickInputHandler implements InputHandler {
 
     @Override
     public void mapKey(int padKey, int deviceKey) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'mapKey'");
+        keyMapping.put(padKey, deviceKey);
     }
 
     @Override
     public short getKeyState(int padKey) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getKeyState'");
+        Integer deviceKey = keyMapping.get(padKey);
+        if (deviceKey != null) {
+            Boolean state = buttonStates.get(deviceKey);
+            return (short) (state != null && state ? 0x41 : 0x40);
+        }
+        return 0x40;
     }
 }

@@ -3,6 +3,10 @@ package com.flavioteixeira1.vnes.core;
 import java.applet.Applet;
 import java.awt.*;
 import javax.swing.plaf.PanelUI;
+
+import net.java.games.input.Controller;
+import net.java.games.input.ControllerEnvironment;
+
 import java.awt.Container.*;
 import java.awt.event.*;
 import java.io.File;
@@ -55,82 +59,184 @@ public class RockmanForm extends Applet implements Runnable, ActionListener {
     private void createMenu() {
         if (parentFrame != null) {
             menuBar = new JMenuBar();
+            //Menu File
             fileMenu = new JMenu("File");
             loadRomItem = new JMenuItem("Load ROM");
             loadRomItem.addActionListener(this);
             
             fileMenu.add(loadRomItem);
             menuBar.add(fileMenu);
-            parentFrame.setJMenuBar(menuBar);
 
-            JMenu configMenu = new JMenu("Configuração");
-            JMenuItem joystickItem = new JMenuItem("Configurar Joystick...");
-            joystickItem.addActionListener(e -> {
-                if (gui != null) {
-                    gui.showJoystickConfig();
+            //Menu Controles
+             JMenu controlsMenu = new JMenu("Controles");
+             JMenuItem configControlsItem = new JMenuItem("Configurar Controles...");
+                  configControlsItem.addActionListener(e -> {
+               if (gui != null && gui.getInputManager() != null) {
+                     new JoystickConfigDialog(parentFrame, gui.getInputManager(), jogo).setVisible(true);
                 }
-            });
-            configMenu.add(joystickItem);
-            menuBar.add(configMenu);
+              });
+                 controlsMenu.add(configControlsItem);
+                 menuBar.add(controlsMenu);
+        
+                parentFrame.setJMenuBar(menuBar);
 
         }
     }
 
+public class JoystickConfigDialog extends JDialog {
+    private InputManager inputManager;
+    private NES nes;
+    private JComboBox<String> player1Combo, player2Combo;
+    private JTextArea statusArea;
+    
+            public JoystickConfigDialog(Frame parent, InputManager inputManager, NES nes) {
+                super(parent, "Configuração de Controles", true);
+                this.inputManager = inputManager;
+                this.nes = nes;
+                initializeUI();
+                pack();
+                setLocationRelativeTo(parent);
+            }
+            
+            private void initializeUI() {
+                setLayout(new BorderLayout(10, 10));
+                
+                // Painel de configuração dos players
+                JPanel configPanel = new JPanel(new GridLayout(3, 2, 5, 5));
+                configPanel.setBorder(BorderFactory.createTitledBorder("Configuração dos Players"));
+                
+                configPanel.add(new JLabel("Player 1:"));
+                player1Combo = new JComboBox<>(new String[]{"Teclado", "Joystick", "Desabilitado"});
+                 // Converter tipo atual para índice do combo
+                int player1Type = inputManager.getPlayerHandlerType(InputManager.PLAYER_1);
+                int player1Index = convertHandlerTypeToIndex(player1Type);
+                player1Combo.setSelectedIndex(player1Index);
+                // Configurar baseado no tipo atual, mas converter para índice correto
+                
+                //player1Combo.setSelectedIndex(player1Type - 1); // Ajuste porque teclado=1, joystick=2, desabilitado=0
+                configPanel.add(player1Combo);
+                
+                configPanel.add(new JLabel("Player 2:"));
+                player2Combo = new JComboBox<>(new String[]{"Teclado", "Joystick", "Desabilitado"});
+                int player2Type = inputManager.getPlayerHandlerType(InputManager.PLAYER_2);
+                int player2Index = convertHandlerTypeToIndex(player2Type);
+                //player2Combo.setSelectedIndex(inputManager.getPlayerHandlerType(InputManager.PLAYER_2));
+                player2Combo.setSelectedIndex(player2Index);
+                configPanel.add(player2Combo);
 
+                // Painel de status do joystick
+                JPanel statusPanel = new JPanel(new BorderLayout());
+                statusPanel.setBorder(BorderFactory.createTitledBorder("Status do Joystick"));
+                
+                statusArea = new JTextArea(4, 30);
+                statusArea.setEditable(false);
+                updateStatus();
+                statusPanel.add(new JScrollPane(statusArea), BorderLayout.CENTER);
+                
+                JButton refreshButton = new JButton("Recarregar Joysticks");
+                refreshButton.addActionListener(e -> refreshJoysticks());
+                statusPanel.add(refreshButton, BorderLayout.SOUTH);
+                
+                // Painel de botões
+                JPanel buttonPanel = new JPanel();
+                JButton applyButton = new JButton("Aplicar");
+                JButton cancelButton = new JButton("Cancelar");
+                
+                applyButton.addActionListener(e -> applyConfig());
+                cancelButton.addActionListener(e -> dispose());
+                
+                buttonPanel.add(applyButton);
+                buttonPanel.add(cancelButton);
+                
+                add(configPanel, BorderLayout.NORTH);
+                add(statusPanel, BorderLayout.CENTER);
+                add(buttonPanel, BorderLayout.SOUTH);
+                
+                setPreferredSize(new Dimension(450, 350));
+            }
+
+
+        private int convertHandlerTypeToIndex(int handlerType) {
+            switch (handlerType) {
+                case InputConfig.HANDLER_KEYBOARD: return 0; // Teclado
+                case InputConfig.HANDLER_JOYSTICK: return 1; // Joystick
+                case InputConfig.HANDLER_DISABLED: return 2; // Desabilitado
+                default: return 2; // Default para desabilitado
+            }
+        }
+    
+        private int convertIndexToHandlerType(int index) {
+            switch (index) {
+                case 0: return InputConfig.HANDLER_KEYBOARD; // Teclado
+                case 1: return InputConfig.HANDLER_JOYSTICK; // Joystick
+                case 2: return InputConfig.HANDLER_DISABLED; // Desabilitado
+                default: return InputConfig.HANDLER_DISABLED; // Default
+            }
+        }
+            
+            private void updateStatus() {
+                StringBuilder status = new StringBuilder();
+                
+                // Verificar joysticks conectados
+                ControllerEnvironment env = ControllerEnvironment.getDefaultEnvironment();
+                Controller[] controllers = env.getControllers();
+                
+                int joystickCount = 0;
+                for (Controller controller : controllers) {
+                    if (controller.getType() == Controller.Type.GAMEPAD || 
+                        controller.getType() == Controller.Type.STICK) {
+                        joystickCount++;
+                        status.append("Joystick ").append(joystickCount).append(": ")
+                            .append(controller.getName()).append("\n");
+                    }
+                }
+                
+                if (joystickCount == 0) {
+                    status.append("Nenhum joystick encontrado\n");
+                }
+                
+                status.append("\nConfiguração atual:\n");
+                status.append("Player 1: ").append(InputConfig.getHandlerName(
+                    inputManager.getPlayerHandlerType(InputManager.PLAYER_1))).append("\n");
+                status.append("Player 2: ").append(InputConfig.getHandlerName(
+                    inputManager.getPlayerHandlerType(InputManager.PLAYER_2)));
+                
+                statusArea.setText(status.toString());
+            }
+            
+            private void refreshJoysticks() {
+                updateStatus();
+            }
+            
+            private void applyConfig() {
+                    try {
+                          System.out.println("=== APLICANDO CONFIGURAÇÃO ===");
+                        // Aplicar configuração do Player 1
+                        int player1Index = player1Combo.getSelectedIndex();
+                        int player1Type = convertIndexToHandlerType(player1Index);
+                        System.out.println("Configurando Player 1 como Teclado...");
+                        inputManager.setPlayerHandler(InputManager.PLAYER_1, player1Type, nes);
+                        
+                        // Aplicar configuração do Player 2
+                        int player2Index = player2Combo.getSelectedIndex();
+                        int player2Type = convertIndexToHandlerType(player2Index);
+                        System.out.println("Configurando Player 2 como Desabilitado...");
+                        inputManager.setPlayerHandler(InputManager.PLAYER_2, player2Type, nes);
+                        System.out.println("=== CONFIGURAÇÃO APLICADA ===");
+                        JOptionPane.showMessageDialog(this, "Configuração aplicada com sucesso!");
+                        dispose();
+                    } catch (Exception e) {
+                        System.err.println("ERRO CRÍTICO: " + e.getMessage());
+                        JOptionPane.showMessageDialog(this, 
+                            "Erro ao aplicar configuração: " + e.getMessage(), 
+                            "Erro", JOptionPane.ERROR_MESSAGE);
+                        e.printStackTrace();
+                    }
+                JOptionPane.showMessageDialog(this, "Configuração aplicada com sucesso!");
+                dispose();
+            }
+    }
      
-
-
-
-     public class JoystickConfigDialog extends JDialog {
-        public JoystickInputHandler joystickHandler;
-        
-        public JoystickConfigDialog(Frame parent, JoystickInputHandler handler) {
-            super(parent, "Configuração do Joystick", true);
-            this.joystickHandler = handler;
-            initializeUI();
-            pack();
-            setLocationRelativeTo(parent);
-        }
-        
-        private void initializeUI() {
-            setLayout(new BorderLayout(10, 10));
-            
-            // Painel de status
-            JPanel statusPanel = new JPanel(new BorderLayout());
-            JLabel statusLabel = new JLabel("Joystick: " + joystickHandler.getJoystickName());
-            JButton refreshButton = new JButton("Recarregar");
-            refreshButton.addActionListener(e -> {
-                joystickHandler.reconnect();
-                statusLabel.setText("Joystick: " + joystickHandler.getJoystickName());
-            });
-            
-            statusPanel.add(statusLabel, BorderLayout.CENTER);
-            statusPanel.add(refreshButton, BorderLayout.EAST);
-            
-            // Painel de instruções
-            JTextArea instructions = new JTextArea(
-                "Instruções:\n" +
-                "- O joystick será detectado automaticamente\n" +
-                "- Os controles funcionam simultaneamente com o teclado\n" +
-                "- Use 'Recarregar' se conectar um joystick após iniciar\n" +
-                "- Mapeamento atual funciona junto com teclado"
-            );
-            instructions.setEditable(false);
-            instructions.setBackground(getBackground());
-            
-            // Botões
-            JPanel buttonPanel = new JPanel();
-            JButton closeButton = new JButton("Fechar");
-            closeButton.addActionListener(e -> dispose());
-            buttonPanel.add(closeButton);
-            
-            add(statusPanel, BorderLayout.NORTH);
-            add(new JScrollPane(instructions), BorderLayout.CENTER);
-            add(buttonPanel, BorderLayout.SOUTH);
-            
-            setPreferredSize(new Dimension(400, 250));
-        }
-    }
 
   
     private String getSaveStateName() {

@@ -2,6 +2,7 @@ package com.flavioteixeira1.vnes.core;
 
 
 import java.awt.event.*;
+import java.util.HashMap;
 import java.util.Map;
 
 public class KbInputHandler implements KeyListener, InputHandler {
@@ -10,12 +11,15 @@ public class KbInputHandler implements KeyListener, InputHandler {
     int[] keyMapping;
     int id;
     NES nes;
+   private Map<Integer, Integer> currentKeyBindings;
+
 
     public KbInputHandler(NES nes, int id) {
         this.nes = nes;
         this.id = id;
         this.allKeysState = new boolean[255];
         this.keyMapping = new int[InputHandler.NUM_KEYS];
+        this.currentKeyBindings = new HashMap<>();
     }
 
     //permite atualizar a instância do NES quando o UI recriar o NES
@@ -130,25 +134,25 @@ public class KbInputHandler implements KeyListener, InputHandler {
 
     @Override
     public boolean isKeyPressed(int keyCode) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'isKeyPressed'");
+        return keyCode >= 0 && keyCode < allKeysState.length && allKeysState[keyCode];
     }
 
     @Override
     public void setKeyBindings(Map<Integer, Integer> keyBindings) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'setKeyBindings'");
+        this.currentKeyBindings = new HashMap<>(keyBindings);
+        // Aplicar os mapeamentos
+        for (Map.Entry<Integer, Integer> entry : keyBindings.entrySet()) {
+            mapKey(entry.getKey(), entry.getValue());
+        }
     }
 
     @Override
     public Map<Integer, Integer> getKeyBindings() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getKeyBindings'");
+       return new HashMap<>(currentKeyBindings);
     }
 
     @Override
     public String getInputType() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getInputType'");
+         return "KEYBOARD";
     }
 }
