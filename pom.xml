@@ -5,7 +5,7 @@
                              http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     
-    <groupId>com.flavioteixeira1.vnes</groupId>
+    <groupId>com.flavioteixeira1</groupId>
     <artifactId>vnes-desktop</artifactId>
     <version>1.0.0</version>
     <packaging>jar</packaging>
@@ -25,6 +25,17 @@
     </dependencies>
     
     <build>
+        <resources>
+            <resource>
+                <directory>src/main/java</directory>
+                <includes>
+                    <include>**/*.pal</include>
+                    <include>**/*.txt</include>
+                    <include>**/*.nes</include>
+                </includes>
+            </resource>
+        </resources>
+        
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -43,7 +54,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>com.flavioteixeira1.vnes.ui.RockmanRUN</mainClass>
+                            <mainClass>com.flavioteixeira1.vnes.core.RockmanRUN</mainClass>
                         </manifest>
                     </archive>
                     <descriptorRefs>
