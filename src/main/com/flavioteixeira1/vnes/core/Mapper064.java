@@ -1,4 +1,5 @@
-package com.flavioteixeira1.vnes;
+package com.flavioteixeira1.vnes.core;
+
 public class Mapper064 extends MapperDefault {
 
     private int irq_counter = 0;

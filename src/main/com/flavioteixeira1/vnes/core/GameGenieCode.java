@@ -1,4 +1,4 @@
-package com.flavioteixeira1.vnes;
+package com.flavioteixeira1.vnes.core;
 
 
 // Game genie code struct:

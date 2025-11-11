@@ -1,4 +1,4 @@
-package com.flavioteixeira1.vnes;
+package com.flavioteixeira1.vnes.ui;
 
 /*
  * To change this template, choose Tools | Templates

@@ -1,5 +1,5 @@
 
-package com.flavioteixeira1.vnes;
+package com.flavioteixeira1.vnes.core;
 
 public class MapperDefault implements MemoryMapper {
 

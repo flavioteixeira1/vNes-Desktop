@@ -1,4 +1,4 @@
-package com.flavioteixeira1.vnes;
+package com.flavioteixeira1.vnes.core;
 
 // Class that provides emulation of the 6502 processor used in the NES.
 // This is the core of the emulator. During emulation, this is run in a

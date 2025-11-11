@@ -1,4 +1,4 @@
-package com.flavioteixeira1.vnes;
+package com.flavioteixeira1.vnes.core;
 
 // Holds info on the cpu. Mostly constants that are placed here
 // to keep the CPU code clean.

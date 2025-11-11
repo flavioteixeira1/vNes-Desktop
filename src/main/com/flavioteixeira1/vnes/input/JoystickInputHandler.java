@@ -1,4 +1,4 @@
-package com.flavioteixeira1.vnes;
+package com.flavioteixeira1.vnes.input;
 
 
 import java.awt.event.KeyEvent;

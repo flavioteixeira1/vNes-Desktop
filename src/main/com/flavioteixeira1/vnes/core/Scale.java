@@ -1,4 +1,4 @@
-package com.flavioteixeira1.vnes;
+package com.flavioteixeira1.vnes.core;
 
 // Scaling code can be found in this class.
 public class Scale{	
