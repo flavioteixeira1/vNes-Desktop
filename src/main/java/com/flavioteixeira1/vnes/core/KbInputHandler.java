@@ -9,16 +9,53 @@ public class KbInputHandler implements KeyListener, InputHandler {
     int[] keyMapping;
     int id;
     NES nes;
+    private JoystickManager joystickManager;
+    private boolean keystate[];
+    private int keymap[];
+    
 
     public KbInputHandler(NES nes, int id) {
         this.nes = nes;
         this.id = id;
         allKeysState = new boolean[255];
         keyMapping = new int[InputHandler.NUM_KEYS];
+        keystate = new boolean[0x100];
+        keymap = new int[0x100];
+        // Inicializar joystick manager
+        try {
+            this.joystickManager = new JoystickManager();
+            if (joystickManager.isJoystickEnabled()) {
+                System.out.println("✅ Joystick integrado com sucesso!");
+            } else {
+                System.out.println("ℹ️  Nenhum joystick detectado. Teclado ativo.");
+            }
+        } catch (Exception e) {
+            System.err.println("❌ Falha ao inicializar joystick: " + e.getMessage());
+            this.joystickManager = null;
+        }
+
+
     }
+
+
+    @Override
+    public boolean getKeyState2(int key) {
+       if (key < keystate.length) {
+            return keystate[key];
+        }
+        return false;
+    }
+
 
     public short getKeyState(int padKey) {
         return (short) (allKeysState[keyMapping[padKey]] ? 0x41 : 0x40);
+    }
+
+     @Override
+    public void mapKey2(int key, int gamekey) {
+        if (key < keymap.length) {
+            keymap[key] = gamekey;
+        }
     }
 
     public void mapKey(int padKey, int kbKeycode) {
@@ -79,6 +116,11 @@ public class KbInputHandler implements KeyListener, InputHandler {
 
     }
 
+    public JoystickManager getJoystickManager(){
+        return this.joystickManager;
+    }
+
+    
     public void keyTyped(KeyEvent ke) {
         // Ignore.
     }
@@ -94,6 +136,13 @@ public class KbInputHandler implements KeyListener, InputHandler {
     public void destroy() {
         nes = null;
     }
+
+    public void cleanup() {
+            if (joystickManager != null) {
+                joystickManager.releaseAllKeys();
+            }
+        }
+
 
     public void setNES(NES nes2) {
         // TODO Auto-generated method stub
@@ -122,5 +171,11 @@ public class KbInputHandler implements KeyListener, InputHandler {
     public String getInputType() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getInputType'");
+    }
+
+    @Override
+    public void handleJoystickKey(int keyCode, boolean pressed) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'handleJoystickKey'");
     }
 }

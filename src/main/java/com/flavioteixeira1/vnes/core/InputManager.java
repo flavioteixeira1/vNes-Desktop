@@ -81,7 +81,7 @@ public class InputManager {
                 setupDefaultKeyboardMappings((KbInputHandler) playerHandlers[player], player);
                 break;
             case InputConfig.HANDLER_JOYSTICK:
-                playerHandlers[player] = new JoystickInputHandler();
+               // playerHandlers[player] = new JoystickInputHandler();
                  // O JoystickInputHandler já tem seus mapeamentos padrão internos
                 break;
             case InputConfig.HANDLER_DISABLED:

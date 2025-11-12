@@ -19,11 +19,14 @@ public interface InputHandler{
 	
 	public short getKeyState(int padKey);
 	public void mapKey(int padKey, int deviceKey);
+	void handleJoystickKey(int keyCode, boolean pressed);
 	public void reset();
 	public void update();
     boolean isKeyPressed(int keyCode);
 	void setKeyBindings(Map<Integer, Integer> keyBindings);
 	Map<Integer, Integer> getKeyBindings();
 	String getInputType();
+    boolean getKeyState2(int key);
+	void mapKey2(int key, int gamekey);
 	
 }

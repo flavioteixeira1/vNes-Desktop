@@ -35,4 +35,22 @@ public class DummyInputHandler implements InputHandler {
     public short getKeyState(int padKey) {
         return 0x40; // Não pressionado
     }
+
+    @Override
+    public void handleJoystickKey(int keyCode, boolean pressed) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'handleJoystickKey'");
+    }
+
+    @Override
+    public boolean getKeyState2(int key) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'getKeyState2'");
+    }
+
+    @Override
+    public void mapKey2(int key, int gamekey) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'mapKey2'");
+    }
 }

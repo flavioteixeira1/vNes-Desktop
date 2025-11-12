@@ -36,7 +36,6 @@ public class RockmanForm extends Applet implements Runnable, ActionListener {
     boolean started = false;
     private boolean showWelcomeScreen = true;
     private boolean romLoaded = false;
-    
     // Adicionar componentes para menu
     private JMenuBar menuBar;
     private JMenu fileMenu;
@@ -54,6 +53,7 @@ public class RockmanForm extends Applet implements Runnable, ActionListener {
         createMenu();
     }
 
+    
     private void createMenu() {
         if (parentFrame != null) {
             menuBar = new JMenuBar();

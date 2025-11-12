@@ -12,6 +12,8 @@ public class UIApp implements UI{
 	ScreenView vScreen;
 	HiResTimer timer;
 	private InputManager inputManager;
+	private InputHandler inputHandler;
+	
 	
 	long t1,t2;
 	int sleepTime;
@@ -24,20 +26,24 @@ public class UIApp implements UI{
 	public void initNES() {
 		System.out.println("UIApp.initNES() - Criando nova instância do NES");
 		nes = new NES(this);
+		inputHandler = new KbInputHandler(nes,0);
+		//Debug
+		System.out.println("🎮 === vNes Joystick Integration ===");
+		System.out.println("📍 InputHandler criado em: " + this.getClass().getSimpleName());
 
-		// Inicializar gerenciador de inputs
-		inputManager = new InputManager(nes);
-
-		// Configuração padrão: Player 1 = Teclado
-        setupDefaultInputs();
-
-		// Se os KbInputHandlers já existirem, atualize a referência do NES neles
-		if (kbJoy1 != null) {
-			//kbJoy1.setNES(nes);
+		if (inputHandler instanceof KbInputHandler) {
+   		 JoystickManager jm = ((KbInputHandler) inputHandler).getJoystickManager();
+   			 if (jm != null) {
+        			System.out.println("✅ Joystick: " + jm.getJoystickName());
+        			System.out.println("🎯 Mapeamento ativo:");
+        			System.out.println("   Botão 0 -> Z (A)");
+        			System.out.println("   Botão 1 -> X (B)");
+        			System.out.println("   Botão 2 -> Enter (Start)");
+        			System.out.println("   Botão 3 -> Ctrl (Select)");
+        			System.out.println("   Eixos -> Setas direcionais");
+    			}
 		}
-		if (kbJoy2 != null) {
-			//kbJoy2.setNES(nes);
-		}
+		
 		
 		// Inicializar componentes visuais se ainda não existirem
 		if (vScreen == null) {
