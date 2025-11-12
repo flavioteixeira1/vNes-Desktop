@@ -1,5 +1,8 @@
 package com.flavioteixeira1.vnes.core;
+import java.awt.Frame;
 import java.awt.event.*;
+
+import javax.swing.JOptionPane;
 
 public class AppletUIApp implements UI{
 	
@@ -10,7 +13,8 @@ public class AppletUIApp implements UI{
 	KbInputHandler kbJoy2;
 	ScreenView vScreen;
 	HiResTimer timer;
-	
+	private InputHandler inputHandler;
+	private InputHandler inputHandler2;
 	long t1,t2;
 	int sleepTime;
 	
@@ -29,8 +33,11 @@ public class AppletUIApp implements UI{
 		vScreen.init();
 		vScreen.setNotifyImageReady(true);
 		
-		kbJoy1 = new KbInputHandler(nes,0);
-		kbJoy2 = new KbInputHandler(nes,1);
+		kbJoy1 = new KbInputHandler(nes,0); //teclado player1
+		kbJoy2 = new KbInputHandler(nes,1); //teclado player2
+
+		inputHandler = new KbInputHandler(nes,0); //joystick player1
+		inputHandler2 = new KbInputHandler(nes,1); //joystick player2
 		
 		// Map keyboard input keys for joypad 1:
 		kbJoy1.mapKey(InputHandler.KEY_A,KeyEvent.VK_X);
@@ -53,9 +60,66 @@ public class AppletUIApp implements UI{
 		kbJoy2.mapKey(InputHandler.KEY_LEFT,KeyEvent.VK_NUMPAD4);
 		kbJoy2.mapKey(InputHandler.KEY_RIGHT,KeyEvent.VK_NUMPAD6);
 		vScreen.addKeyListener(kbJoy2);
+
+
+		if (inputHandler instanceof KbInputHandler) {
+   		 JoystickManager jm = ((KbInputHandler) inputHandler).getJoystickManager();
+   			 if (jm != null) {
+        			System.out.println("✅ Joystick Player1: " + jm.getJoystickName());
+        			System.out.println("🎯 Mapeamento ativo:");
+        			System.out.println("   Botão 0 -> Z (A)");
+        			System.out.println("   Botão 1 -> X (B)");
+        			System.out.println("   Botão 2 -> Enter (Start)");
+        			System.out.println("   Botão 3 -> Ctrl (Select)");
+        			System.out.println("   Eixos -> Setas direcionais");
+    			}
+		}
+
+		if (inputHandler2 instanceof KbInputHandler) {
+   		 JoystickManager jm2 = ((KbInputHandler) inputHandler2).getJoystickManager();
+   			 if (jm2 != null) {
+        			System.out.println("✅ Joystick Player2: " + jm2.getJoystickName());
+        			System.out.println("🎯 Mapeamento ativo:");
+        			System.out.println("   Botão 0 -> 7 (A)");
+        			System.out.println("   Botão 1 -> 9 (B)");
+        			System.out.println("   Botão 2 -> 1 (Start)");
+        			System.out.println("   Botão 3 -> 3 (Select)");
+        			System.out.println("   Eixos -> 8, 4, 2, 6 direcionais");
+    			}
+		}
 		
 	}
+
+	public JoystickManager getJoystickManager() {
+			if (inputHandler instanceof KbInputHandler) {
+				return ((KbInputHandler) inputHandler).getJoystickManager();
+			}
+			return null;
+		}
 	
+	
+	public boolean isJoystickEnabled() {
+		JoystickManager jm = getJoystickManager();
+		return jm != null && jm.isJoystickEnabled();
+	}
+
+
+	public void showJoystickConfig(Frame parentFrame) {
+    JoystickManager jm = getJoystickManager();
+		if (jm != null && jm.isJoystickEnabled()) {
+			JoystickConfigDialog dialog = new JoystickConfigDialog(parentFrame, jm);
+			dialog.setVisible(true);
+		} else {
+			JOptionPane.showMessageDialog(parentFrame,
+				"Nenhum joystick detectado!\n\n" +
+				"Conecte um joystick e reinicie o emulador.",
+				"Joystick Não Encontrado",
+				JOptionPane.WARNING_MESSAGE);
+		}
+	}
+
+	
+
 	public void imageReady(boolean skipFrame){
 		
 		// Sound stuff:

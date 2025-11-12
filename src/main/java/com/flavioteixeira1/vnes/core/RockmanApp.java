@@ -13,7 +13,7 @@ import javax.swing.plaf.PanelUI;
 	
         
 public class RockmanApp extends Applet implements Runnable{
-//public class RockmanApp extends javafx.application.Application{
+
     
     boolean scale;
 	boolean scanlines;
