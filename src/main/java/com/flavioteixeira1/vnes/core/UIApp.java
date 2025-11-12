@@ -12,7 +12,7 @@ public class UIApp implements UI{
 	ScreenView vScreen;
 	HiResTimer timer;
 	private InputHandler inputHandler;
-	private InputHandler inputHandler2;
+	//private InputHandler inputHandler2;
 	
 	
 	long t1,t2;
@@ -27,7 +27,7 @@ public class UIApp implements UI{
 		System.out.println("UIApp.initNES() - Criando nova instância do NES");
 		nes = new NES(this);
 		inputHandler = new KbInputHandler(nes,0);
-		inputHandler2 = new KbInputHandler(nes,1);
+		//inputHandler2 = new KbInputHandler(nes,1);
 		//Debug
 		System.out.println("🎮 === vNes Joystick Integration ===");
 		System.out.println("📍 InputHandler criado em: " + this.getClass().getSimpleName());

@@ -75,18 +75,7 @@ public class AppletUIApp implements UI{
     			}
 		}
 
-		if (inputHandler2 instanceof KbInputHandler) {
-   		 JoystickManager jm2 = ((KbInputHandler) inputHandler2).getJoystickManager();
-   			 if (jm2 != null) {
-        			System.out.println("✅ Joystick Player2: " + jm2.getJoystickName());
-        			System.out.println("🎯 Mapeamento ativo:");
-        			System.out.println("   Botão 0 -> 7 (A)");
-        			System.out.println("   Botão 1 -> 9 (B)");
-        			System.out.println("   Botão 2 -> 1 (Start)");
-        			System.out.println("   Botão 3 -> 3 (Select)");
-        			System.out.println("   Eixos -> 8, 4, 2, 6 direcionais");
-    			}
-		}
+		
 		
 	}
 
@@ -118,7 +107,7 @@ public class AppletUIApp implements UI{
 		}
 	}
 
-	
+
 
 	public void imageReady(boolean skipFrame){
 		

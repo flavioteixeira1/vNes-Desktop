@@ -99,6 +99,9 @@ public class JoystickManager {
             System.out.println("  Botão " + entry.getKey() + " -> " + getKeyName(entry.getValue()));
         }
     }
+
+
+    
     
     private void startPollingThread() {
         Thread pollingThread = new Thread(() -> {
