@@ -38,25 +38,13 @@ public class KbInputHandler implements KeyListener, InputHandler {
     }
 
 
-    @Override
-    public boolean getKeyState2(int key) {
-       if (key < keystate.length) {
-            return keystate[key];
-        }
-        return false;
-    }
-
+   
 
     public short getKeyState(int padKey) {
         return (short) (allKeysState[keyMapping[padKey]] ? 0x41 : 0x40);
     }
 
-     @Override
-    public void mapKey2(int key, int gamekey) {
-        if (key < keymap.length) {
-            keymap[key] = gamekey;
-        }
-    }
+    
 
     public void mapKey(int padKey, int kbKeycode) {
         keyMapping[padKey] = kbKeycode;
@@ -144,38 +132,15 @@ public class KbInputHandler implements KeyListener, InputHandler {
         }
 
 
-    public void setNES(NES nes2) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'setNES'");
-    }
+  
 
-    @Override
-    public boolean isKeyPressed(int keyCode) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'isKeyPressed'");
-    }
+   
 
-    @Override
-    public void setKeyBindings(Map<Integer, Integer> keyBindings) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'setKeyBindings'");
-    }
+    
 
-    @Override
-    public Map<Integer, Integer> getKeyBindings() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getKeyBindings'");
-    }
+   
 
-    @Override
-    public String getInputType() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getInputType'");
-    }
+   
 
-    @Override
-    public void handleJoystickKey(int keyCode, boolean pressed) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'handleJoystickKey'");
-    }
+   
 }

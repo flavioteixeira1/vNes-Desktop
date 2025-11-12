@@ -150,9 +150,9 @@ public class JoystickManager {
                 dispatchKeyEvent(keyCode, currentState);
                 
                 // Debug
-                if (currentState) {
-                    System.out.println("🎯 Botão " + index + " -> " + getKeyName(keyCode));
-                }
+               // if (currentState) {
+               //     System.out.println("🎯 Botão " + index + " -> " + getKeyName(keyCode));
+              //  }
             }
         }
     }

@@ -1,7 +1,7 @@
 package com.flavioteixeira1.vnes.core;
+import java.awt.Frame;
 import java.awt.event.*;
-
-import javax.sound.sampled.SourceDataLine;
+import javax.swing.JOptionPane;
 
 public class UIApp implements UI{
 	
@@ -11,7 +11,6 @@ public class UIApp implements UI{
 	KbInputHandler kbJoy2;
 	ScreenView vScreen;
 	HiResTimer timer;
-	private InputManager inputManager;
 	private InputHandler inputHandler;
 	
 	
@@ -55,33 +54,33 @@ public class UIApp implements UI{
 	}
 
 
-	private void setupDefaultInputs() {
-        // Player 1: Teclado (configuração padrão)
-        KbInputHandler kbHandler = (KbInputHandler) inputManager.getPlayerHandler(InputManager.PLAYER_1);
-        
-        // Map keyboard input keys for joypad 1:
-        kbHandler.mapKey(InputHandler.KEY_A, KeyEvent.VK_X);
-        kbHandler.mapKey(InputHandler.KEY_B, KeyEvent.VK_Z);
-        kbHandler.mapKey(InputHandler.KEY_START, KeyEvent.VK_ENTER);
-        kbHandler.mapKey(InputHandler.KEY_SELECT, KeyEvent.VK_CONTROL);
-        kbHandler.mapKey(InputHandler.KEY_UP, KeyEvent.VK_UP);
-        kbHandler.mapKey(InputHandler.KEY_DOWN, KeyEvent.VK_DOWN);
-        kbHandler.mapKey(InputHandler.KEY_LEFT, KeyEvent.VK_LEFT);
-        kbHandler.mapKey(InputHandler.KEY_RIGHT, KeyEvent.VK_RIGHT);
-        
-        // Player 2: Teclado numérico
-        inputManager.setPlayerHandler(InputManager.PLAYER_2, InputConfig.HANDLER_KEYBOARD, nes);
-        KbInputHandler kbHandler2 = (KbInputHandler) inputManager.getPlayerHandler(InputManager.PLAYER_2);
-        
-        kbHandler2.mapKey(InputHandler.KEY_A, KeyEvent.VK_NUMPAD7);
-        kbHandler2.mapKey(InputHandler.KEY_B, KeyEvent.VK_NUMPAD9);
-        kbHandler2.mapKey(InputHandler.KEY_START, KeyEvent.VK_NUMPAD1);
-        kbHandler2.mapKey(InputHandler.KEY_SELECT, KeyEvent.VK_NUMPAD3);
-        kbHandler2.mapKey(InputHandler.KEY_UP, KeyEvent.VK_NUMPAD8);
-        kbHandler2.mapKey(InputHandler.KEY_DOWN, KeyEvent.VK_NUMPAD2);
-        kbHandler2.mapKey(InputHandler.KEY_LEFT, KeyEvent.VK_NUMPAD4);
-        kbHandler2.mapKey(InputHandler.KEY_RIGHT, KeyEvent.VK_NUMPAD6);
-    }
+	public JoystickManager getJoystickManager() {
+			if (inputHandler instanceof KbInputHandler) {
+				return ((KbInputHandler) inputHandler).getJoystickManager();
+			}
+			return null;
+		}
+	
+	public boolean isJoystickEnabled() {
+		JoystickManager jm = getJoystickManager();
+		return jm != null && jm.isJoystickEnabled();
+	}
+
+
+	public void showJoystickConfig(Frame parentFrame) {
+    JoystickManager jm = getJoystickManager();
+		if (jm != null && jm.isJoystickEnabled()) {
+			JoystickConfigDialog dialog = new JoystickConfigDialog(parentFrame, jm);
+			dialog.setVisible(true);
+		} else {
+			JOptionPane.showMessageDialog(parentFrame,
+				"Nenhum joystick detectado!\n\n" +
+				"Conecte um joystick e reinicie o emulador.",
+				"Joystick Não Encontrado",
+				JOptionPane.WARNING_MESSAGE);
+		}
+	}
+
 	
 	public void initVisualComponents() {
 		System.out.println("UIApp.initVisualComponents() - Inicializando componentes visuais");
@@ -286,6 +285,8 @@ public class UIApp implements UI{
 		}
 	}
 
+
+
 	public NES getNES(){
 		return nes;
 	}
@@ -326,9 +327,6 @@ public class UIApp implements UI{
 		return "";
 	}
 
-	public InputManager getInputManager() {
-        return inputManager;
-    }
 	
 	public void setWindowCaption(String s){}
 	
