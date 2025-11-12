@@ -1,5 +1,4 @@
 package com.flavioteixeira1.vnes.core;
-
 public class HiResTimer{
 	
 	public long currentMicros(){

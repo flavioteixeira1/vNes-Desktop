@@ -1,5 +1,4 @@
 package com.flavioteixeira1.vnes.core;
-
 import java.io.*;
 
 public class NES{
@@ -67,12 +66,6 @@ public class NES{
 		
 	}
 
-	//Return ROM name
-
-	public String getRomName(){
-		return this.romFile;
-	}
-
 	// Returns CPU object.
 	public CPU getCpu(){
 		return cpu;
@@ -111,36 +104,8 @@ public class NES{
 	
 	// Returns the currently loaded ROM.
 	public ROM getRom(){
-		return this.rom;
+		return rom;
 	}
-
-
-	public String getRomFilePath() {
-        try {
-            return this.romFile;
-        } catch (Exception e) {
-            return null;
-        }
-    }
-
-	public String getRomFileNameSafe() {
-        try {
-            if (this.rom != null) {
-                try {
-                    String rn = this.rom.getFileName();
-                    if (rn != null && !rn.trim().isEmpty()) {
-                        return rn;
-                    }
-                } catch (Exception ignored) { }
-            }
-            if (this.romFile != null && !this.romFile.trim().isEmpty()) {
-                java.io.File f = new java.io.File(this.romFile);
-                String n = f.getName();
-                if (n != null && !n.trim().isEmpty()) return n;
-            }
-        } catch (Exception ignored) {}
-        return null;
-    }
 	
 	
 	// Returns the GUI.
@@ -170,179 +135,78 @@ public class NES{
         return saveStateManager;
     }
     
-    public boolean saveState(String name) {
-		
-        return saveStateManager.saveState(name);
+    public boolean saveState(int slot, String name) {
+        return saveStateManager.saveState(slot, name);
     }
     
-    public boolean loadState() {
-        return saveStateManager.loadState();
+    public boolean loadState(int slot) {
+        return saveStateManager.loadState(slot);
     }
 	
 
+
 	public boolean stateLoad(ByteBuffer buf) {
-			System.out.println("NES.stateLoad: carregando estado...");
-			System.out.println("NES.stateLoad: mapper type = " + (memMapper != null ? memMapper.getClass().getSimpleName() : "null"));
-			byte version2 = (byte) buf.readByte();
-			System.out.println("NES.stateLoad: versão = " + version2 + ", posição do buffer = " + buf.getPos());
-			int posBeforeMapper = buf.getPos();
 			boolean continueEmulation = false;
-			boolean success = false;
-
-			// Validações iniciais
-			if (cpu == null || cpuMem == null || ppu == null || ppuMem == null || sprMem == null) {
-				System.err.println("NES.stateLoad: componentes críticos nulos, abortando load.");
-				return false;
-			}
-
+			boolean success;
+			
 			// Pausar emulação
-			if (cpu.isRunning()) {
+			if(cpu.isRunning()) {
 				continueEmulation = true;
 				stopEmulation();
 			}
-
-			try {
-				byte version = (byte) buf.readByte();
-				System.out.println("NES.stateLoad: versão do state = " + version);
-
-				if (version != 1) {
-					System.out.println("State file has wrong format.");
-					return false;
-				}
-
-				// --- Prepare mapper e ROM mapping antes de restaurar memórias ---
+			
+			// Verificar versão
+			if(buf.readByte() == 1) {
 				try {
-					if (rom == null || !rom.isValid()) {
-						System.err.println("NES.stateLoad: ROM ausente ou inválida. Abortando load.");
-						return false;
-					}
-
-					// Se não houver mapper (ou foi destruído), recrie e inicialize para esta ROM
-					if (memMapper == null) {
-						System.out.println("NES.stateLoad: memMapper == null -> criando novo mapper para ROM");
-						memMapper = rom.createMapper();
-						if (memMapper != null) {
-							memMapper.init(this);
-							cpu.setMapper(memMapper);
-							// Carregar mapeamento inicial (coloca bancos padrão)
-							System.out.println("NES.stateLoad: chamando memMapper.loadROM(rom) para inicializar bancos");
-							memMapper.loadROM(rom);
-						} else {
-							System.out.println("NES.stateLoad: createMapper() retornou null");
-						}
-					} else {
-						// Se já existe, garantir que esteja inicializado com esta NES
-						try {
-							memMapper.init(this);
-						} catch (Exception e) {
-							System.out.println("NES.stateLoad: memMapper.init falhou: " + e.getMessage());
-						}
-						// Também chamar loadROM para garantir bancos iniciais
-						try {
-							memMapper.loadROM(rom);
-						} catch (Exception e) {
-							System.out.println("NES.stateLoad: memMapper.loadROM falhou: " + e.getMessage());
-						}
-					}
-				} catch (Exception e) {
-					System.err.println("NES.stateLoad: erro ao (re)inicializar memMapper: " + e.getMessage());
-					e.printStackTrace();
-				}
-
-				
-
-					// 2) Restaurar memórias do CPU/PPU e CPU
-
-					System.out.println("NES.stateLoad: carregando cpuMem...");
+					// Carregar estado de todas as unidades
 					cpuMem.stateLoad(buf);
-					
-					System.out.println("NES.stateLoad: carregando ppuMem...");
 					ppuMem.stateLoad(buf);
-
-					System.out.println("NES.stateLoad: carregando sprMem...");
 					sprMem.stateLoad(buf);
-
-					System.out.println("NES.stateLoad: carregando cpu...");
 					cpu.stateLoad(buf);
-
-					// --- Agora é seguro chamar stateLoad nos componentes na ordem correta ---
-					try {
-						// 1) Restaurar estado do mapper (registradores internos)
-						if (memMapper != null) {
-							System.out.println("NES.stateLoad: restaurando estado do mapper...");
-							memMapper.stateLoad(buf);
-						} else {
-							System.out.println("NES.stateLoad: memMapper == null, pulando memMapper.stateLoad");
-						}
-
 					
-					// 3) Restaurar PPU (depois que mapper e memórias estejam consistentes)
-					System.out.println("NES.stateLoad: carregando PPU...");
+					// IMPORTANTE: Carregar mapper antes da PPU
+					if(memMapper != null) {
+						memMapper.stateLoad(buf);
+					}
+					
 					ppu.stateLoad(buf);
-
-					// 4) Paleta e áudio
-					if (palTable != null) {
-						System.out.println("NES.stateLoad: carregando palTable...");
+					
+					// Carregar paleta
+					if(palTable != null) {
 						palTable.stateLoad(buf);
 					}
-					if (papu != null) {
-						System.out.println("NES.stateLoad: carregando PAPU...");
+					
+					// Carregar áudio
+					if(papu != null) {
 						papu.stateLoad(buf);
 					}
-
+					
 					success = true;
+					
 				} catch (Exception e) {
-					System.err.println("Erro ao carregar estado (componentes): " + e.getMessage());
+					System.err.println("Erro ao carregar estado: " + e.getMessage());
 					e.printStackTrace();
 					success = false;
 				}
-			} catch (Exception e) {
-				System.err.println("Erro ao carregar estado (geral): " + e.getMessage());
-				e.printStackTrace();
+			} else {
+				System.out.println("State file has wrong format.");
 				success = false;
 			}
-			System.out.println("NES.stateLoad: posição antes do mapper = " + buf.getPos());
-			memMapper.stateLoad(buf);
-			System.out.println("NES.stateLoad: posição depois do mapper = " + buf.getPos());
-
-			// Se o load foi bem-sucedido, tente estabilizar o sistema e reiniciar se necessário
-			if (success) {
-				// Pequeno delay para estabilização
-				try { Thread.sleep(150); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); }
-
-				// Forçar atualização de estruturas dependentes do mapper (opcional seguro)
-				try {
-					if (memMapper != null) {
-						// Alguns mappers podem precisar reconduzir carregamento de bancos após stateLoad
-						try {
-							System.out.println("NES.stateLoad: reaplicando bancos via memMapper.loadROM(rom) após stateLoad para estabilidade");
-							memMapper.loadROM(rom);
-						} catch (Exception ignore) {}
-					}
-				} catch (Exception e) {
-					System.out.println("NES.stateLoad: aviso ao reaplicar bancos do mapper: " + e.getMessage());
-				}
+			
+			// Reiniciar emulação se estava rodando
+			if(continueEmulation) {
+				startEmulation();
 			}
-
-			// Reiniciar emulação se estava rodando antes (somente se o load tiver sucesso)
-			if (continueEmulation) {
-				if (success) {
-					try { Thread.sleep(80); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); }
-					startEmulation();
-				} else {
-					System.out.println("NES.stateLoad: load falhou, não reiniciando emulação.");
-				}
-			}
-
+			
 			return success;
 		}
 
 
+		public boolean isRunning() {
+			return isRunning;
+		}
+	
 	public void stateSave(ByteBuffer buf) {
-			System.out.println("NES.stateSave: salvando estado...");
-    		System.out.println("NES.stateSave: mapper type = " + (memMapper != null ? memMapper.getClass().getSimpleName() : "null"));
-			buf.putByte((byte)1); 
-			
 			boolean continueEmulation = isRunning();
 			stopEmulation();
 			
@@ -355,10 +219,10 @@ public class NES{
 				ppuMem.stateSave(buf);
 				sprMem.stateSave(buf);
 				cpu.stateSave(buf);
-				memMapper.stateSave(buf);
-				//if(memMapper != null) {
-				//	memMapper.stateSave(buf);
-				//}
+				
+				if(memMapper != null) {
+					memMapper.stateSave(buf);
+				}
 				
 				ppu.stateSave(buf);
 				
@@ -386,26 +250,6 @@ public class NES{
 
 	
 	
-	public boolean isRunning() {
-		// TODO Auto-generated method stub
-		//throw new UnsupportedOperationException("Unimplemented method 'isRunning'");
-		if (this.gui != null){
-			return true;
-		} else 
-		return false;
-	}
-
-	
-	public int getMemoryByte(int addr) {
-			try {
-				if (cpuMem == null || cpuMem.mem == null) return -1;
-				int a = addr & 0xFFFF;
-				return cpuMem.mem[a] & 0xFF;
-			} catch (Exception e) {
-				return -1;
-			}
-		}
-
 	public void startEmulation(){
 		System.out.println("NES.startEmulation() - Iniciando emulação...");
 		 // Verificar se temos uma ROM válida

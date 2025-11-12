@@ -1,11 +1,10 @@
 package com.flavioteixeira1.vnes.core;
-
 import java.awt.event.*;
 
 public class AppletUI1 implements UI{
 	
 	//vNES applet;
-    Rockman applet;
+        Rockman applet;
 	NES nes;
 	KbInputHandler kbJoy1;
 	KbInputHandler kbJoy2;

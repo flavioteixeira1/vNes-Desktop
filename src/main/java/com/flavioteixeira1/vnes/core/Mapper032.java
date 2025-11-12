@@ -1,5 +1,4 @@
 package com.flavioteixeira1.vnes.core;
-
 public class Mapper032 extends MapperDefault {
 
     int regs[] = new int[1];

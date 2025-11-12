@@ -1,5 +1,4 @@
 package com.flavioteixeira1.vnes.core;
-
 import javax.swing.*;
 import java.awt.*;
 import java.io.*;

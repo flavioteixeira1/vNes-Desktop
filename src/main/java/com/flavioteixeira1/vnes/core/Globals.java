@@ -1,5 +1,4 @@
 package com.flavioteixeira1.vnes.core;
-
 public class Globals{
 	
 	public static double CPU_FREQ_NTSC = 1789772.5d;

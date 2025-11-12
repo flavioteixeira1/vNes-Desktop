@@ -1,5 +1,4 @@
 package com.flavioteixeira1.vnes.core;
-
 // Classe utilitária para criar ROM de boas-vindas
 import java.io.*;
 

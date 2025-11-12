@@ -1,5 +1,4 @@
 package com.flavioteixeira1.vnes.core;
-
 public class ChannelDM implements PapuChannel{
 	
 	

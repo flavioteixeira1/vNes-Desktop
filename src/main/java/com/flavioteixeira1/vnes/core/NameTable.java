@@ -1,5 +1,4 @@
 package com.flavioteixeira1.vnes.core;
-
 public class NameTable{
 	
 	String name;

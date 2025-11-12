@@ -1,5 +1,4 @@
 package com.flavioteixeira1.vnes.core;
-
 import java.io.*;
 import java.util.zip.*;
 
@@ -432,8 +431,8 @@ public class ByteBuffer{
 		return readByte(pos)==1;
 	}
 	
-	public byte readByte() throws ArrayIndexOutOfBoundsException{
-		byte ret = (byte) readByte(curPos);
+	public short readByte() throws ArrayIndexOutOfBoundsException{
+		short ret = readByte(curPos);
 		move(1);
 		return ret;
 	}

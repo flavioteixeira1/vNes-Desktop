@@ -1,5 +1,4 @@
 package com.flavioteixeira1.vnes.core;
-
 public class BlipBuffer{
 	
 	// These values must be set:

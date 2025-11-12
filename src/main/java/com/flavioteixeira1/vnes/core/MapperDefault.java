@@ -1,4 +1,3 @@
-
 package com.flavioteixeira1.vnes.core;
 
 public class MapperDefault implements MemoryMapper {
@@ -11,16 +10,15 @@ public class MapperDefault implements MemoryMapper {
     public CPU cpu;
     public PPU ppu;
     public int cpuMemSize;
-    public int joy1StrobeState = 0;
-    public int joy2StrobeState = 0;
-    public int joypadLastWrite = -1;
+    public int joy1StrobeState;
+    public int joy2StrobeState;
+    public int joypadLastWrite;
     public boolean mousePressed;
-    public boolean gameGenieActive = false;
+    public boolean gameGenieActive;
     public int mouseX;
     public int mouseY;
     int tmp;
     long crc;
-    
 
     public void init(NES nes) {
 
@@ -36,33 +34,29 @@ public class MapperDefault implements MemoryMapper {
         joypadLastWrite = -1;
 
     }
-     // Carrega o estado do mapper (deve espelhar exatamente stateSave)
+
     public void stateLoad(ByteBuffer buf) {
-        byte mapperVersion = buf.readByte();
-        System.out.println("MapperDefault.stateLoad: chamado por " + this.getClass().getSimpleName() + ", versão = " + mapperVersion);
-        
+
         // Check version:
-        if (mapperVersion == 1) {
-        // Ler campos comuns do mapper
-        joy1StrobeState = buf.readInt();
-        joy2StrobeState = buf.readInt();
-        joypadLastWrite = buf.readInt();
-        
-        // Delegar para implementação específica do mapper
-        mapperInternalStateLoad(buf);
-        } else {
-            System.out.println("MapperDefault.stateLoad: versão desconhecida: " + mapperVersion);
-            }
+        if (buf.readByte() == 1) {
+
+            // Joypad stuff:
+            joy1StrobeState = buf.readInt();
+            joy2StrobeState = buf.readInt();
+            joypadLastWrite = buf.readInt();
+
+            // Mapper specific stuff:
+            mapperInternalStateLoad(buf);
+
+        }
 
     }
 
     public void stateSave(ByteBuffer buf) {
 
         // Version:
-        buf.putByte((byte) 1);
-        buf.putInt(0x12345678);  // Magic number para validação
+        buf.putByte((short) 1);
 
-        // Campos comuns (joypad/estado)
         // Joypad stuff:
         buf.putInt(joy1StrobeState);
         buf.putInt(joy2StrobeState);
@@ -72,25 +66,21 @@ public class MapperDefault implements MemoryMapper {
         mapperInternalStateSave(buf);
 
     }
-    // Implementações padrão: subclasses sobrecarregam para ler seu estado extra
+
     public void mapperInternalStateLoad(ByteBuffer buf) {
 
-        // Default: nada a ler aqui na classe base
-        // Subclasses devem chamar super.mapperInternalStateLoad(buf) (se necessário)
-        //buf.putByte((short) joy1StrobeState);
-        //buf.putByte((short) joy2StrobeState);
-        //buf.putByte((short) joypadLastWrite);
+        buf.putByte((short) joy1StrobeState);
+        buf.putByte((short) joy2StrobeState);
+        buf.putByte((short) joypadLastWrite);
 
     }
 
-    
-
     public void mapperInternalStateSave(ByteBuffer buf) {
-        // Default: nada a salvar aqui na classe base
-        // Subclasses devem chamar super.mapperInternalStateSave(buf) (se necessário)
-        //joy1StrobeState = buf.readByte();
-        //joy2StrobeState = buf.readByte();
-        //joypadLastWrite = buf.readByte();
+
+        joy1StrobeState = buf.readByte();
+        joy2StrobeState = buf.readByte();
+        joypadLastWrite = buf.readByte();
+
     }
 
     public void setGameGenieState(boolean enable) {

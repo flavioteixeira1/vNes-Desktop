@@ -1,5 +1,4 @@
 package com.flavioteixeira1.vnes.core;
-
 public class Mapper004 extends MapperDefault{
 	
 	public static final int CMD_SEL_2_1K_VROM_0000 = 0;

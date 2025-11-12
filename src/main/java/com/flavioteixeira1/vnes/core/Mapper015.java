@@ -1,6 +1,5 @@
 package com.flavioteixeira1.vnes.core;
 
-
 public class Mapper015 extends MapperDefault {
 
     public void init(NES nes) {

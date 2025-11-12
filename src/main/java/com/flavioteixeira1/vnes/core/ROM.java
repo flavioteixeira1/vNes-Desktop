@@ -1,6 +1,4 @@
 package com.flavioteixeira1.vnes.core;
-
-
 import java.io.*;
 import java.awt.*;
 import javax.swing.JOptionPane;

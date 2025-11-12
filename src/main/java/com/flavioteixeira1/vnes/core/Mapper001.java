@@ -1,5 +1,4 @@
 package com.flavioteixeira1.vnes.core;
-
 public class Mapper001 extends MapperDefault{
 
 	// Register flags:

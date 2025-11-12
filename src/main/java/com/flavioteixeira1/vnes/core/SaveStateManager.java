@@ -1,311 +1,217 @@
 package com.flavioteixeira1.vnes.core;
-
+// SaveStateManager.java
 import java.io.*;
 
 public class SaveStateManager {
+    private static final int MAX_SAVE_STATES = 10;
     private NES nes;
-    private String saveStateName;
-    private boolean saveStateExists;
-  
+    private String[] saveStateNames;
+    private boolean[] saveStateExists;
+    
     public SaveStateManager(NES nes) {
         this.nes = nes;
-        this.saveStateName = "";
-        this.saveStateExists = false;
+        this.saveStateNames = new String[MAX_SAVE_STATES];
+        this.saveStateExists = new boolean[MAX_SAVE_STATES];
+        
+        // Inicializar nomes padrão
+        for (int i = 0; i < MAX_SAVE_STATES; i++) {
+            saveStateNames[i] = "Save State " + (i + 1);
+            saveStateExists[i] = false;
+        }
+        
         loadSaveStateInfo();
     }
-
     
-
-    private String getRomBaseNameSafe() {
+    public boolean saveState(int slot, String customName) {
+        if (slot < 0 || slot >= MAX_SAVE_STATES) return false;
+                
         try {
-            if (nes == null) {
-                System.out.println("SaveStateManager: nes == null");
-                return "unknown";
-            }
-
-            // 1) Tentar pelo objeto ROM exposto (método existente ROM.getFileName())
-            ROM rom = nes.getRom();
-            if (rom != null) {
-                try {
-                    String romFile = rom.getFileName();
-                    System.out.println("SaveStateManager: rom.getFileName() -> " + romFile);
-                    if (romFile != null && !romFile.trim().isEmpty()) {
-                        int idx = romFile.lastIndexOf('.');
-                        String base = idx > 0 ? romFile.substring(0, idx) : romFile;
-                        base = base.replaceAll("[^a-zA-Z0-9._-]", "_");
-                        return base;
-                    }
-                } catch (Exception e) {
-                    System.out.println("SaveStateManager: rom.getFileName() lançou exceção: " + e.getMessage());
-                }
-            } else {
-                System.out.println("SaveStateManager: nes.getRom() == null");
-            }
-
-            // 2) Tentar pelo caminho armazenado no NES (romFile), usando getter seguro
-            try {
-                String romFilePath = nes.getRomFilePath();
-                System.out.println("SaveStateManager: nes.getRomFilePath() -> " + romFilePath);
-                if (romFilePath != null && !romFilePath.trim().isEmpty()) {
-                    java.io.File f = new java.io.File(romFilePath);
-                    String name = f.getName();
-                    if (name != null && !name.trim().isEmpty()) {
-                        int idx = name.lastIndexOf('.');
-                        String base = idx > 0 ? name.substring(0, idx) : name;
-                        base = base.replaceAll("[^a-zA-Z0-9._-]", "_");
-                        return base;
-                    }
-                }
-            } catch (Exception e) {
-                System.out.println("SaveStateManager: nes.getRomFilePath() lançou exceção: " + e.getMessage());
-            }
-
-            // 3) Tentar método auxiliar do NES (getRomFileNameSafe) se implementado
-            try {
-                String nameSafe = nes.getRomFileNameSafe();
-                System.out.println("SaveStateManager: nes.getRomFileNameSafe() -> " + nameSafe);
-                if (nameSafe != null && !nameSafe.trim().isEmpty()) {
-                    int idx = nameSafe.lastIndexOf('.');
-                    String base = idx > 0 ? nameSafe.substring(0, idx) : nameSafe;
-                    base = base.replaceAll("[^a-zA-Z0-9._-]", "_");
-                    return base;
-                }
-            } catch (Exception e) {
-                // ignore
-            }
-
-            // fallback
-            System.out.println("SaveStateManager: não conseguiu obter nome da ROM, retornando 'unknown'");
-            return "unknown";
-        } catch (Exception e) {
-            System.out.println("SaveStateManager: exceção em getRomBaseNameSafe: " + e.getMessage());
-            return "unknown";
-        }
-    }
-
-
-
-    private String getRomBaseName() {
-        if (nes.getRom().getFileName() == null) return "unknown";
-        String romName = nes.getRom().getFileName();
-        int endIndex = romName.lastIndexOf('.');
-        if (endIndex > 0) {
-            return romName.substring(0, endIndex);
-        }
-        return romName;
-    }
-
-    // Salva o estado em um arquivo usando parte do nome da ROM
-    public boolean saveState(String customName) {
-        System.out.println("chamando método saveState");
-        if (nes == null) {
-            System.err.println("SaveStateManager: NES é null, não é possível salvar.");
-            return false;
-        }
-        String romBase = getRomBaseNameSafe();
-        String fileName = "savestate_" + romBase + ".dat";
-        System.out.println(romBase);
-        try {
-            
+            String fileName = "savestate_" + slot + ".dat";
             FileOutputStream fos = new FileOutputStream(fileName);
-
-            ByteBuffer buf = new ByteBuffer(1024 * 1024, ByteBuffer.BO_LITTLE_ENDIAN); // 1MB buffer
             
+            // Usar sua ByteBuffer customizada
+            ByteBuffer buf = new ByteBuffer(1024 * 1024, ByteBuffer.BO_LITTLE_ENDIAN); // 1MB buffer
+                        
+            // Salvar estado do jogo primeiro
             nes.stateSave(buf);
-
-            // Metadados
-            buf.putString(customName != null ? customName : getRomBaseNameSafe());
+            
+            // Depois salvar metadados
+            buf.putString(customName != null ? customName : saveStateNames[slot]);
             buf.putLong(System.currentTimeMillis());
-
+            
+            // Escrever apenas os bytes usados
             byte[] data = buf.getBytes();
             fos.write(data, 0, buf.getPos());
             fos.close();
-
-            saveStateName = customName != null ? customName : getRomBaseNameSafe();
-            saveStateExists = true;
+            
+            // Atualizar informações locais
+            saveStateNames[slot] = customName != null ? customName : saveStateNames[slot];
+            saveStateExists[slot] = true;
+            
             saveSaveStateInfo();
-            System.out.println("Save state salvo: " + saveStateName);
+            
+            System.out.println("Save state salvo no slot " + slot + ": " + saveStateNames[slot]);
             return true;
-
+            
         } catch (IOException e) {
             System.err.println("Erro ao salvar estado: " + e.getMessage());
             return false;
         }
     }
-
-    // Carrega o estado do arquivo atual, referente à ROM ativa
-    public boolean loadState() {
-        System.out.println("Chamando método loadState");
-        if (nes == null) {
-            System.err.println("SaveStateManager: NES é null, não é possível carregar.");
-            return false;
-        }
-
-        String romBase = getRomBaseNameSafe();
-        String fileName = "savestate_" + romBase + ".dat";
+    
+    public boolean loadState(int slot) {
+        if (slot < 0 || slot >= MAX_SAVE_STATES || !saveStateExists[slot]) return false;
         
         try {
-            
+            String fileName = "savestate_" + slot + ".dat";
             File file = new File(fileName);
             if (!file.exists()) {
                 System.err.println("Arquivo de save state não existe: " + fileName);
                 return false;
             }
+            
             FileInputStream fis = new FileInputStream(file);
             byte[] fileData = new byte[(int)file.length()];
             fis.read(fileData);
             fis.close();
-
+            
+            // Criar ByteBuffer customizado com os dados do arquivo
             ByteBuffer buf = new ByteBuffer(fileData, ByteBuffer.BO_LITTLE_ENDIAN);
-
+            
+            // Parar emulação antes de carregar
             boolean wasRunning = nes.isRunning();
-            if (wasRunning) nes.stopEmulation();
-
+            if (wasRunning) {
+                nes.stopEmulation();
+            }
+            
+            // Carregar estado do jogo
             boolean success = nes.stateLoad(buf);
-
+            
             if (success) {
-                // Lê metadados (opcional)
+                // Tentar ler metadados (pode falhar se o arquivo for antigo)
                 try {
-                    saveStateName = buf.readString();
+                    String name = buf.readString();
                     long timestamp = buf.readLong();
-                    System.out.println("Save state carregado: " + saveStateName + " (gravado em " + timestamp + ")");
+                    System.out.println("Save state carregado do slot " + slot + ": " + name);
                 } catch (Exception e) {
-                    System.out.println("Save state carregado (metadados ausentes)");
+                    System.out.println("Save state carregado do slot " + slot + " (metadados ausentes)");
                 }
-                // ----- Diagnóstico extra: inspecionar PC e memória ao redor -----
-    try {
-        CPU cpu = nes.getCpu();
-        int pc = -1;
-        if (cpu != null) {
-            try {
-                pc = cpu.getPC();
-            } catch (Throwable t) {
-                pc = -1;
-            }
-        }
-        System.out.println("DEBUG: CPU.getPC() -> " + pc);
-
-        if (pc >= 0) {
-            // Mostrar 16 bytes a partir do PC
-            StringBuilder sb = new StringBuilder();
-            sb.append(String.format("DEBUG: mem[@%04X..+15]:", pc));
-            for (int i = 0; i < 16; i++) {
-                int addr = (pc + i) & 0xFFFF;
-                int b = nes.getMemoryByte(addr);
-                sb.append(String.format(" %02X", b >= 0 ? b : 0));
-            }
-            System.out.println(sb.toString());
-
-            // Verificar se o opcode em PC é conhecido (usa CpuInfo)
-                        try {
-                            int opcode = nes.getMemoryByte(pc);
-                            int[] opdata = CpuInfo.getOpData(); // retorna tabela de opcodes
-                            boolean valid = false;
-                            if (opcode >= 0 && opcode < 256 && opdata != null) {
-                                valid = (opdata[opcode] != 0xFF);
-                            }
-                            System.out.println(String.format("DEBUG: opcode at PC = 0x%02X (%s)", opcode,
-                                    valid ? "valid" : "INVALID"));
-                        } catch (Throwable t) {
-                            System.out.println("DEBUG: não foi possível verificar opcode (ex: classe CpuInfo inacessível)");
-                        }
-                    } else {
-                        System.out.println("DEBUG: PC inválido, não é possível inspecionar memória.");
-                    }
-                } catch (Exception e) {
-                    System.err.println("Erro ao rodar diagnósticos pós-load: " + e.getMessage());
-                    e.printStackTrace();
-                }
-                // ----- fim do diagnóstico -----
-                // Forçar atualização da UI / PPU
-                try {
-                        // Se a UI estiver disponível, forçar repaint imediato
-                        UI ui = nes.getGui();
-                        if (ui != null) {
-                            System.out.println("SaveStateManager: notificando GUI para redraw.");
-                            // método genérico: se existir um método para notificar imagem pronta, usá-lo.
-                            // Aqui usamos imageReady se estiver disponível; caso contrário, tente repaint na view.
-                            try {
-                                ui.getScreenView().repaint();
-                            } catch (Exception e) {
-                                // fallback: tentar notificar via método genérico
-                                try {
-                                    ui.getNES().getGui().imageReady(true);
-                                } catch (Exception ignore) {}
-                            }
-                        } else {
-                            System.out.println("SaveStateManager: UI nula, não é possível forçar repaint.");
-                        }
-                    } catch (Exception e) {
-                        System.err.println("Erro ao forçar redraw após loadState: " + e.getMessage());
-                        e.printStackTrace();
-                    }
+                
+                // Reiniciar emulação se estava rodando
                 if (wasRunning) {
-                    try { Thread.sleep(100); } catch (InterruptedException ie) {}
+                    // Pequeno delay para estabilização
+                    try {
+                        Thread.sleep(100);
+                    } catch (InterruptedException ie) {}
+                    
                     nes.startEmulation();
                 }
-                saveStateExists = true;
             }
+            
             return success;
-
+            
         } catch (IOException e) {
             System.err.println("Erro ao carregar estado: " + e.getMessage());
             return false;
         }
     }
-
-    // Exclui o save state da ROM atual
-    public boolean deleteState() {
+    
+    public boolean deleteState(int slot) {
+        if (slot < 0 || slot >= MAX_SAVE_STATES || !saveStateExists[slot]) return false;
+        
         try {
-            String fileName = "savestate_" + getRomBaseNameSafe() + ".dat";
+            String fileName = "savestate_" + slot + ".dat";
             File file = new File(fileName);
             boolean deleted = file.delete();
+            
             if (deleted) {
-                saveStateExists = false;
-                saveStateName = "";
+                saveStateExists[slot] = false;
+                saveStateNames[slot] = "Save State " + (slot + 1);
                 saveSaveStateInfo();
-                System.out.println("Save state deletado.");
+                System.out.println("Save state deletado do slot " + slot);
             }
+            
             return deleted;
+            
         } catch (Exception e) {
             System.err.println("Erro ao deletar estado: " + e.getMessage());
             return false;
         }
     }
-
-    public String getStateName() {
-        return saveStateName != null && !saveStateName.isEmpty() ? saveStateName : "[Sem save]";
+    
+    public void renameState(int slot, String newName) {
+        if (slot < 0 || slot >= MAX_SAVE_STATES) return;
+        
+        if (newName != null && !newName.trim().isEmpty()) {
+            saveStateNames[slot] = newName;
+            saveSaveStateInfo();
+        }
     }
-
-    public boolean stateExists() {
-        return saveStateExists;
+    
+    public String getStateName(int slot) {
+        if (slot < 0 || slot >= MAX_SAVE_STATES) return "";
+        return saveStateNames[slot];
     }
-
+    
+    public boolean stateExists(int slot) {
+        if (slot < 0 || slot >= MAX_SAVE_STATES) return false;
+        return saveStateExists[slot];
+    }
+    
+    public int getMaxSaveStates() {
+        return MAX_SAVE_STATES;
+    }
+    
     private void saveSaveStateInfo() {
         try {
             FileOutputStream fos = new FileOutputStream("savestate_info.dat");
             DataOutputStream dos = new DataOutputStream(fos);
-            dos.writeBoolean(saveStateExists);
-            dos.writeUTF(saveStateName != null ? saveStateName : "");
+            
+            for (int i = 0; i < MAX_SAVE_STATES; i++) {
+                dos.writeBoolean(saveStateExists[i]);
+                dos.writeUTF(saveStateNames[i]);
+            }
+            
             dos.close();
             fos.close();
         } catch (IOException e) {
-            System.err.println("Erro ao salvar informações do save state: " + e.getMessage());
+            System.err.println("Erro ao salvar informações dos save states: " + e.getMessage());
         }
     }
-
+    
     private void loadSaveStateInfo() {
         try {
             FileInputStream fis = new FileInputStream("savestate_info.dat");
             DataInputStream dis = new DataInputStream(fis);
-            saveStateExists = dis.readBoolean();
-            saveStateName = dis.readUTF();
+            
+            for (int i = 0; i < MAX_SAVE_STATES; i++) {
+                saveStateExists[i] = dis.readBoolean();
+                saveStateNames[i] = dis.readUTF();
+            }
+            
             dis.close();
             fis.close();
         } catch (IOException e) {
-            System.out.println("Save info não encontrada, usando padrão vazio");
-            saveStateExists = false;
-            saveStateName = "";
+            // Arquivo não existe, usar valores padrão
+            System.out.println("Informações dos save states não encontradas, usando padrões");
+        }
+    }
+
+    private boolean validateState(int slot) {
+        try {
+            String fileName = "savestate_" + slot + ".dat";
+            File file = new File(fileName);
+            if (!file.exists()) return false;
+            
+            // Verificar tamanho mínimo razoável
+            if (file.length() < 1024) {
+                System.err.println("Save state muito pequeno: " + file.length() + " bytes");
+                return false;
+            }
+            
+            return true;
+        } catch (Exception e) {
+            return false;
         }
     }
 }

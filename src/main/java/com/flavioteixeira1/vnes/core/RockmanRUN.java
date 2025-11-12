@@ -1,5 +1,4 @@
 package com.flavioteixeira1.vnes.core;
-
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -35,7 +34,6 @@ public class RockmanRUN extends JFrame {
 
         
         frame.setSize(650, 620);
-        //frame.setSize(720, 700);
         frame.getContentPane().add(game);
         
         // Passar referência do frame para o RockmanForm

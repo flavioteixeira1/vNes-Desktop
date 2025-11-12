@@ -5,8 +5,6 @@ package com.flavioteixeira1.vnes.core;
 // loop that decodes & executes instructions and invokes emulation of the
 // PPU and PAPU.
 
-
-
 public final class CPU implements Runnable{
 
 
@@ -117,18 +115,6 @@ public final class CPU implements Runnable{
 		buf.putInt(cyclesToHalt);
 
 	}
-
-	public int getPC() {
-    // REG_PC_NEW é o valor restaurado por stateLoad; se a implementação usa outro nome,
-    // ajuste para retornar o campo que guarda o PC após stateLoad.
-    try {
-        return REG_PC_NEW;
-    } catch (Throwable t) {
-        // fallback: se REG_PC existir
-        try { return REG_PC_NEW; } catch (Throwable t2) { return -1; }
-    }
-}
-
 
 	public void reset(){
 

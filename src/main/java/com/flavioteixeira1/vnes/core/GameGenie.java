@@ -1,5 +1,4 @@
 package com.flavioteixeira1.vnes.core;
-
 import java.util.*;
 
 public class GameGenie{

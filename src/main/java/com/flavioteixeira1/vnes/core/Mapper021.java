@@ -1,6 +1,4 @@
-
 package com.flavioteixeira1.vnes.core;
-
 
 public class Mapper021 extends MapperDefault {
 

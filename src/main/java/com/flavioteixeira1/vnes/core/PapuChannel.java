@@ -1,5 +1,4 @@
 package com.flavioteixeira1.vnes.core;
-
 public interface PapuChannel{
 	
 	public void writeReg(int address, int value);

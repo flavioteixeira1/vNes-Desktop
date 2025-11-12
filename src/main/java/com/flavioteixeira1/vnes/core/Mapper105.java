@@ -1,4 +1,3 @@
-
 package com.flavioteixeira1.vnes.core;
 
 public class Mapper105 extends MapperDefault {

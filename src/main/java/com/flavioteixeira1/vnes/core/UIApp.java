@@ -1,5 +1,4 @@
 package com.flavioteixeira1.vnes.core;
-
 import java.awt.event.*;
 
 import javax.sound.sampled.SourceDataLine;
@@ -10,7 +9,6 @@ public class UIApp implements UI{
     NES nes;
 	KbInputHandler kbJoy1;
 	KbInputHandler kbJoy2;
-	JoystickInputHandler joystickInputHandler;
 	ScreenView vScreen;
 	HiResTimer timer;
 	private InputManager inputManager;
@@ -35,10 +33,10 @@ public class UIApp implements UI{
 
 		// Se os KbInputHandlers já existirem, atualize a referência do NES neles
 		if (kbJoy1 != null) {
-			kbJoy1.setNES(nes);
+			//kbJoy1.setNES(nes);
 		}
 		if (kbJoy2 != null) {
-			kbJoy2.setNES(nes);
+			//kbJoy2.setNES(nes);
 		}
 		
 		// Inicializar componentes visuais se ainda não existirem
@@ -49,6 +47,7 @@ public class UIApp implements UI{
 			vScreen.updateNESReference(nes);
 		}
 	}
+
 
 	private void setupDefaultInputs() {
         // Player 1: Teclado (configuração padrão)
@@ -78,7 +77,6 @@ public class UIApp implements UI{
         kbHandler2.mapKey(InputHandler.KEY_RIGHT, KeyEvent.VK_NUMPAD6);
     }
 	
-	
 	public void initVisualComponents() {
 		System.out.println("UIApp.initVisualComponents() - Inicializando componentes visuais");
 		
@@ -102,76 +100,32 @@ public class UIApp implements UI{
 			kbJoy1.mapKey(InputHandler.KEY_RIGHT, KeyEvent.VK_RIGHT);
 			
 			if (vScreen != null) {
-			InputHandler handler1 = inputManager.getPlayerHandler(InputManager.PLAYER_1);
-            InputHandler handler2 = inputManager.getPlayerHandler(InputManager.PLAYER_2);
-            
-            if (handler1 instanceof KeyListener) {
-                vScreen.addKeyListener((KeyListener) handler1);
-            }
-            if (handler2 instanceof KeyListener) {
-                vScreen.addKeyListener((KeyListener) handler2);
-            }
-        }
+				vScreen.addKeyListener(kbJoy1);
 			}
+		}
+		
+		if (kbJoy2 == null) {
+			kbJoy2 = new KbInputHandler(nes, 1);
+			// Map keyboard input keys for joypad 2:
+			kbJoy2.mapKey(InputHandler.KEY_A, KeyEvent.VK_NUMPAD7);
+			kbJoy2.mapKey(InputHandler.KEY_B, KeyEvent.VK_NUMPAD9);
+			kbJoy2.mapKey(InputHandler.KEY_START, KeyEvent.VK_NUMPAD1);
+			kbJoy2.mapKey(InputHandler.KEY_SELECT, KeyEvent.VK_NUMPAD3);
+			kbJoy2.mapKey(InputHandler.KEY_UP, KeyEvent.VK_NUMPAD8);
+			kbJoy2.mapKey(InputHandler.KEY_DOWN, KeyEvent.VK_NUMPAD2);
+			kbJoy2.mapKey(InputHandler.KEY_LEFT, KeyEvent.VK_NUMPAD4);
+			kbJoy2.mapKey(InputHandler.KEY_RIGHT, KeyEvent.VK_NUMPAD6);
+			
+			if (vScreen != null) {
+				vScreen.addKeyListener(kbJoy2);
+			}
+		}
 	}
-
-	
-		
-		
 	
 	public void init(boolean showGui){
 		// Criar primeira instância do NES
 		initNES();
-		initializeInputHandlers();
 	}
-
-	public void updateGameControls() {
-        if (inputManager != null) {
-            inputManager.update();
-        }
-    }
-	
-
-	public boolean isKeyPressed(int keyCode) {
-        // Verifica ambos: teclado SEMPRE tem prioridade? Ou ambos funcionam?
-        // Depende da sua preferência. Aqui ambos funcionam simultaneamente:
-        boolean keyboardPressed = kbJoy1.isKeyPressed(keyCode);
-        boolean joystickPressed = joystickInputHandler.isConnected() && 
-                                 joystickInputHandler.isKeyPressed(keyCode);
-        
-        return keyboardPressed || joystickPressed;
-    }
-
-	
-
-
-	public void showJoystickConfig() {
-        if (jogo != null) {
-            //jogo.JoystickConfigDialog(this.joystickInputHandler);
-			
-        }
-    }
-
-	public JoystickInputHandler getJoystickInputHandler() {
-        return joystickInputHandler;
-    }
-
-
-
-	private void initializeInputHandlers() {
-        // Teclado SEMPRE ativo
-        kbJoy1 = new KbInputHandler(nes, sleepTime);
-        
-        // Joystick opcional
-        joystickInputHandler = new JoystickInputHandler();
-        
-        // Configura o frame com listener de teclado
-        if (jogo != null) {
-            jogo.addKeyListener((KeyListener) kbJoy1);
-			jogo.addKeyListener((KeyListener) kbJoy2);
-        }
-    }
-
 	
 	public void imageReady(boolean skipFrame){
 		if (vScreen != null) {
@@ -293,22 +247,19 @@ public class UIApp implements UI{
 		
 		// 4.Criar nova instância do NES
 		initNES();
-
-    	// 5. Reconfigurar o ScreenView com o novo NES
-		if (vScreen != null) {
+		// 5. Reconfigurar o ScreenView com o novo NES
+			if (vScreen != null) {
 			System.out.println("Reconfigurando ScreenView com novo NES...");
 			vScreen.updateNESReference(nes);
-
-			// Atualizar referência do NES nos handlers existentes antes de re-adicionar
+			
+			// Re-adicionar listeners
 			if (kbJoy1 != null) {
-				kbJoy1.setNES(nes);
 				vScreen.addKeyListener(kbJoy1);
 			}
 			if (kbJoy2 != null) {
-				kbJoy2.setNES(nes);
 				vScreen.addKeyListener(kbJoy2);
 			}
-		}
+   		 }
 		// 6.Carregar ROM
 		boolean success = nes.loadRom(filePath);
 		if (success) {
@@ -329,63 +280,17 @@ public class UIApp implements UI{
 		}
 	}
 
-
-	public void testInputs() {
-		System.out.println("=== TESTE AVANÇADO DE CONTROLES ===");
-		
-		if (inputManager != null) {
-			InputHandler handler1 = inputManager.getPlayerHandler(InputManager.PLAYER_1);
-			InputHandler handler2 = inputManager.getPlayerHandler(InputManager.PLAYER_2);
-			
-			System.out.println("Player 1: " + (handler1 != null ? handler1.getInputType() : "NULL"));
-			System.out.println("Player 2: " + (handler2 != null ? handler2.getInputType() : "NULL"));
-			
-			// Testar todos os botões
-			if (handler1 instanceof KbInputHandler) {
-				((KbInputHandler) handler1).printKeyMappings();
-				
-				int[] testKeys = {
-					InputHandler.KEY_A, InputHandler.KEY_B, InputHandler.KEY_START, 
-					InputHandler.KEY_SELECT, InputHandler.KEY_UP, InputHandler.KEY_DOWN,
-					InputHandler.KEY_LEFT, InputHandler.KEY_RIGHT
-				};
-				String[] keyNames = {"A", "B", "START", "SELECT", "UP", "DOWN", "LEFT", "RIGHT"};
-				
-				for (int i = 0; i < testKeys.length; i++) {
-					short state = handler1.getKeyState(testKeys[i]);
-					System.out.println("P1 - " + keyNames[i] + ": " + state + " (" + 
-									(state == 0x41 ? "PRESSED" : "NOT PRESSED") + ")");
-				}
-			}
-		}
-		
-		// Verificar foco
-		if (vScreen != null) {
-			System.out.println("ScreenView tem foco: " + vScreen.hasFocus());
-			System.out.println("ScreenView é focusable: " + vScreen.isFocusable());
-		}
-		
-		System.out.println("=== FIM DO TESTE ===");
-	}
-
-
 	public NES getNES(){
 		return nes;
 	}
 	
-	public InputHandler getJoy1() {
-        return inputManager != null ? inputManager.getPlayerHandler(InputManager.PLAYER_1) : null;
-    }
-    
-    public InputHandler getJoy2() {
-        return inputManager != null ? inputManager.getPlayerHandler(InputManager.PLAYER_2) : null;
-    }
-
-	// Novo método para obter o gerenciador de inputs
-    public InputManager getInputManager() {
-        return inputManager;
-    }
-
+	public InputHandler getJoy1(){
+		return kbJoy1;
+	}
+	
+	public InputHandler getJoy2(){
+		return kbJoy2;
+	}
 	
 	public BufferView getScreenView(){
 		return vScreen;
@@ -414,6 +319,10 @@ public class UIApp implements UI{
 	public String getWindowCaption(){
 		return "";
 	}
+
+	public InputManager getInputManager() {
+        return inputManager;
+    }
 	
 	public void setWindowCaption(String s){}
 	
