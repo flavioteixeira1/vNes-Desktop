@@ -26,12 +26,12 @@ public class KbInputHandler implements KeyListener, InputHandler {
             try {
                 this.joystickManager = JoystickManager.getInstance();
                 if (joystickManager.isJoystickEnabled()) {
-                    System.out.println("✅ Joystick integrado com sucesso!");
+                    System.out.println(" Joystick integrado com sucesso!");
                 } else {
-                    System.out.println("ℹ️  Nenhum joystick detectado ou bibliotecas não disponíveis.");
+                    System.out.println("  Nenhum joystick detectado ou bibliotecas não disponíveis.");
                 }
             } catch (Exception e) {
-                System.err.println("❌ Falha ao acessar joystick: " + e.getMessage());
+                System.err.println(" Falha ao acessar joystick: " + e.getMessage());
                 this.joystickManager = null;
             }
 

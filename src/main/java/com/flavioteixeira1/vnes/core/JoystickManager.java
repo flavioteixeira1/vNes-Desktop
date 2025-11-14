@@ -40,7 +40,7 @@ public class JoystickManager {
     // Construtor privado para singleton
     private JoystickManager() {
         instanceCount++;
-        System.out.println("🎮 JoystickManager instância " + instanceCount + " criada");
+        System.out.println(" JoystickManager instância " + instanceCount + " criada");
         
         try {
             this.robot = new Robot();
@@ -73,7 +73,7 @@ public class JoystickManager {
     
     private void initJoystick() {
         try {
-            System.out.println("🔄 Inicializando joystick...");
+            System.out.println(" Inicializando joystick...");
             
             // Verificar se JInput está disponível
             try {
@@ -216,8 +216,8 @@ public class JoystickManager {
         buttonToKeyMapping.put(4, KeyEvent.VK_A);      // Extra 1
         buttonToKeyMapping.put(5, KeyEvent.VK_S);      // Extra 2
         
-        //System.out.println("🎮 Mapeamento configurado:");
-        System.out.println("🎮 Mapeamento configurado (OS: " + System.getProperty("os.name") + "):");
+        //System.out.println(" Mapeamento configurado:");
+        System.out.println("  Mapeamento configurado (OS: " + System.getProperty("os.name") + "):");
         for (Map.Entry<Integer, Integer> entry : buttonToKeyMapping.entrySet()) {
             System.out.println("  Botão " + entry.getKey() + " -> " + getKeyName(entry.getValue()));
         }
@@ -225,13 +225,13 @@ public class JoystickManager {
     
     private void startPollingThread() {
         if (pollingThread != null && pollingThread.isAlive()) {
-            System.out.println("⚠️ Thread de polling já está ativa");
+            System.out.println(" Thread de polling já está ativa");
             return;
         }
         
         pollingActive.set(true);
         pollingThread = new Thread(() -> {
-            System.out.println("🔄 Iniciando polling do joystick...");
+            System.out.println(" Iniciando polling do joystick...");
             while (pollingActive.get()) {
                 if (joystickEnabled.get() && joystick != null) {
                     poll();
@@ -242,7 +242,7 @@ public class JoystickManager {
                     break;
                 }
             }
-            System.out.println("🔄 Polling do joystick finalizado.");
+            System.out.println(" Polling do joystick finalizado.");
         });
         pollingThread.setDaemon(true);
         pollingThread.setName("Joystick-Polling");
@@ -252,7 +252,7 @@ public class JoystickManager {
     private void poll() {
         try {
             if (!joystick.poll()) {
-                System.out.println("⚠️ Falha no poll do joystick");
+                System.out.println(" Falha no poll do joystick");
                 // Não desabilitar completamente, apenas liberar teclas
                 releaseAllKeys();
                 return;
@@ -269,7 +269,7 @@ public class JoystickManager {
                 }
             }
         } catch (Exception e) {
-            System.err.println("❌ Erro durante polling: " + e.getMessage());
+            System.err.println(" Erro durante polling: " + e.getMessage());
             releaseAllKeys();
         }
     }
@@ -281,19 +281,19 @@ public class JoystickManager {
             lastButtonStates[index] = currentState;
 
              // Debug: mostrar todos os botões detectados
-            if (currentState) {
-                System.out.println("Botão físico " + index + " pressionado - Nome: " + comp.getName() + 
-                                ", Identificador: " + comp.getIdentifier());
-            }
+            //if (currentState) {
+            //    System.out.println("Botão físico " + index + " pressionado - Nome: " + comp.getName() + 
+            //                    ", Identificador: " + comp.getIdentifier());
+            //}
             
             if (buttonToKeyMapping.containsKey(index)) {
                 int keyCode = buttonToKeyMapping.get(index);
                 dispatchKeyEvent(keyCode, currentState);
                 
                 // Debug apenas quando pressionado
-                if (currentState) {
-                    System.out.println("Botão " + index + " pressionado -> " + getKeyName(keyCode));
-                }
+              //  if (currentState) {
+              //      System.out.println("Botão " + index + " pressionado -> " + getKeyName(keyCode));
+              //  }
             }
         }
     }
@@ -376,14 +376,14 @@ public class JoystickManager {
                 keyStates[keyCode] = false;
             }
         } catch (Exception e) {
-            System.err.println("❌ Erro ao enviar tecla " + keyCode + ": " + e.getMessage());
+            System.err.println("Erro ao enviar tecla " + keyCode + ": " + e.getMessage());
         }
     }
     
     public void pausePolling() {
         pollingActive.set(false);
         releaseAllKeys();
-        System.out.println("⏸️ Polling do joystick pausado");
+        System.out.println("Polling do joystick pausado");
     }
     
     public void resumePolling() {
@@ -392,13 +392,13 @@ public class JoystickManager {
             if (pollingThread == null || !pollingThread.isAlive()) {
                 startPollingThread();
             }
-            System.out.println("▶️ Polling do joystick retomado");
+            System.out.println("Polling do joystick retomado");
         }
     }
     
     public void setButtonMapping(int buttonIndex, int keyCode) {
         buttonToKeyMapping.put(buttonIndex, keyCode);
-        System.out.println("🔄 Remapeado botão " + buttonIndex + " para " + getKeyName(keyCode));
+        System.out.println("Remapeado botão " + buttonIndex + " para " + getKeyName(keyCode));
     }
     
     private String getKeyName(int keyCode) {
@@ -435,7 +435,7 @@ public class JoystickManager {
         releaseAllKeys();
         joystickEnabled.set(false);
         joystick = null;
-        System.out.println("🧹 JoystickManager limpo");
+        System.out.println(" JoystickManager limpo");
     }
     
     // Método estático para limpeza global
