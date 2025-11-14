@@ -340,94 +340,111 @@ public class RockmanForm extends Applet implements Runnable, ActionListener {
    
 
     private void loadNewRom(String romPath) {
-            System.out.println("RockmanForm.loadNewRom() - Iniciando carregamento de nova ROM");
-            System.out.println("Caminho: " + romPath);
-            
-            // 1. Parar thread de emulação atual se estiver rodando
-            if (jogo != null && jogo.isRunning()) {
-                System.out.println("Parando emulação atual...");
-                jogo.stopEmulation();
+        System.out.println("RockmanForm.loadNewRom() - Iniciando carregamento de nova ROM");
+        // Pausar joystick antes de começar
+        if (JoystickManager.isInitialized()) {
+                JoystickManager.getInstance().pausePolling();}
+
+            try{ System.out.println("Caminho: " + romPath);
                 
-                try {
-                    Thread.sleep(400); // Delay maior
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-            
-            // 2. Não remover o panelScreen - vamos reutilizá-lo
-            // apenas garantir que está limpo
-            if (panelScreen != null) {
-                System.out.println("Limpando ScreenView atual...");
-                // Não remover do container, apenas limpar
-                panelScreen.clear();
-            }
-            
-            // 3. Resetar estado
-            started = false;
-            showWelcomeScreen = false;
-            romLoaded = false;
-            this.rom = romPath;
-            
-            System.out.println("Nova ROM definida: " + rom);
-            
-            if (gui != null) {
-                System.out.println("Solicitando carregamento da ROM via UIApp...");
-                gui.loadNewRom(romPath);
-                
-                // Obter nova referência do NES
-                jogo = gui.getNES();
-                
-                if (jogo != null && jogo.rom != null && jogo.rom.isValid()) {
-                    System.out.println("ROM carregada com sucesso!");
+                // 1. Parar thread de emulação atual se estiver rodando
+                if (jogo != null && jogo.isRunning()) {
+                    System.out.println("Parando emulação atual...");
+                    jogo.stopEmulation();
                     
-                    // 4. Se o panelScreen já existe, apenas atualizar a referência
-                    if (panelScreen != null) {
-                        System.out.println("Atualizando referência do NES no ScreenView existente...");
-                        panelScreen.updateNESReference(jogo);
-                    } else {
-                        // 5. Se não existe, criar novo
-                        System.out.println("Criando novo ScreenView...");
-                        addScreenView();
-                    }
-                    
-                    // 6. Pequeno delay para estabilização
                     try {
-                        Thread.sleep(300);
+                        Thread.sleep(400); // Delay maior
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
-                    
-                    // 7. Configurar propriedades
-                    Globals.timeEmulation = timeemulation;
-                    if (jogo.ppu != null) {
-                        jogo.ppu.showSoundBuffer = showsoundbuffer;
-                    }
-                    
-                    // 8. Diagnóstico final antes de iniciar
-                    System.out.println("=== DIAGNÓSTICO FINAL ===");
-                    System.out.println("NES: " + (jogo != null ? "OK" : "NULL"));
-                    System.out.println("PPU: " + (jogo != null && jogo.getPpu() != null ? "OK" : "NULL"));
-                    System.out.println("ScreenView: " + (panelScreen != null ? "OK" : "NULL"));
-                    System.out.println("Buffer: " + (jogo != null && jogo.getPpu() != null && jogo.getPpu().buffer != null ? "OK" : "NULL"));
-                    System.out.println("=========================");
-                    
-                    // 9. AGORA iniciar emulação
-                    System.out.println("Iniciando emulação...");
-                    jogo.startEmulation();
-                    
-                    romLoaded = true;
-                    showWelcomeScreen = false;
-                    System.out.println("Emulação configurada com sucesso!");
-                    
-                } else {
-                    System.err.println("Falha ao carregar ROM, mostrando tela de boas-vindas");
-                    showWelcomeScreen = true;
-                    romLoaded = false;
-                    repaint();
                 }
+                
+                // 2. Não remover o panelScreen - vamos reutilizá-lo
+                // apenas garantir que está limpo
+                if (panelScreen != null) {
+                    System.out.println("Limpando ScreenView atual...");
+                    // Não remover do container, apenas limpar
+                    panelScreen.clear();
+                }
+                
+                // 3. Resetar estado
+                started = false;
+                showWelcomeScreen = false;
+                romLoaded = false;
+                this.rom = romPath;
+                System.out.println("Nova ROM definida: " + rom);
+                
+                if (gui != null) {
+                    System.out.println("Solicitando carregamento da ROM via UIApp...");
+                    gui.loadNewRom(romPath);
+                    
+                    // Obter nova referência do NES
+                    jogo = gui.getNES();
+                    
+                    if (jogo != null && jogo.rom != null && jogo.rom.isValid()) {
+                        System.out.println("ROM carregada com sucesso!");
+                        
+                        // 4. Se o panelScreen já existe, apenas atualizar a referência
+                        if (panelScreen != null) {
+                            System.out.println("Atualizando referência do NES no ScreenView existente...");
+                            panelScreen.updateNESReference(jogo);
+                        } else {
+                            // 5. Se não existe, criar novo
+                            System.out.println("Criando novo ScreenView...");
+                            addScreenView();
+                        }
+                        
+                        // 6. Pequeno delay para estabilização
+                        try {
+                            Thread.sleep(300);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                        
+                        // 7. Configurar propriedades
+                        Globals.timeEmulation = timeemulation;
+                        if (jogo.ppu != null) {
+                            jogo.ppu.showSoundBuffer = showsoundbuffer;
+                        }
+                        
+                        // 8. Diagnóstico final antes de iniciar
+                        System.out.println("=== DIAGNÓSTICO FINAL ===");
+                        System.out.println("NES: " + (jogo != null ? "OK" : "NULL"));
+                        System.out.println("PPU: " + (jogo != null && jogo.getPpu() != null ? "OK" : "NULL"));
+                        System.out.println("ScreenView: " + (panelScreen != null ? "OK" : "NULL"));
+                        System.out.println("Buffer: " + (jogo != null && jogo.getPpu() != null && jogo.getPpu().buffer != null ? "OK" : "NULL"));
+                        System.out.println("=========================");
+                        
+                        // 9. AGORA iniciar emulação
+                        System.out.println("Iniciando emulação...");
+                        jogo.startEmulation();
+                        
+                        romLoaded = true;
+                        showWelcomeScreen = false;
+                        System.out.println("Emulação configurada com sucesso!");
+                        
+                    } else {
+                        System.err.println("Falha ao carregar ROM, mostrando tela de boas-vindas");
+                        showWelcomeScreen = true;
+                        romLoaded = false;
+                        repaint();
+                    }
+                }
+
+            }finally {
+            // Retomar joystick após conclusão (com delay para estabilização)
+            if (JoystickManager.isInitialized()) {
+                new Thread(() -> {
+                    try {
+                        Thread.sleep(1000); // 1 segundo para estabilização
+                        JoystickManager.getInstance().resumePolling();
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
+                }).start();
             }
-        } 
+        }
+    } 
 
 
 
@@ -694,6 +711,10 @@ public class RockmanForm extends Applet implements Runnable, ActionListener {
     }
     
     public void destroy() {
+
+        // Limpar joystick globalmente
+        JoystickManager.globalCleanup();
+        
         if (jogo != null && jogo.getCpu().isRunning()) {
             stop();
         }
