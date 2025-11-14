@@ -21,7 +21,6 @@ public class BufferView extends JPanel{
 	private VolatileImage vimg;
 	private boolean usingMenu = false;
 	
-	
 	private Graphics gfx;
 	private int width;
 	private int height;
