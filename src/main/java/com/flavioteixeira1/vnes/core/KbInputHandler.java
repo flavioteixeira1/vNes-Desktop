@@ -1,0 +1,145 @@
+package com.flavioteixeira1.vnes.core;
+
+import java.awt.event.*;
+import java.util.Map;
+
+public class KbInputHandler implements KeyListener, InputHandler {
+
+    boolean[] allKeysState;
+    int[] keyMapping;
+    int id;
+    NES nes;
+    private JoystickManager joystickManager;
+    private boolean keystate[];
+    private int keymap[];
+    
+
+    public KbInputHandler(NES nes, int id) {
+        this.nes = nes;
+        this.id = id; // 0 = Player 1, 1 = Player 2
+        allKeysState = new boolean[255];
+        keyMapping = new int[InputHandler.NUM_KEYS];
+        keystate = new boolean[0x100];
+        keymap = new int[0x100];
+         // Inicializar joystick manager específico para este jogador
+            try {
+                this.joystickManager = JoystickManager.getInstanceForPlayer(id);
+                if (joystickManager.isJoystickEnabled()) {
+                    System.out.println(" Joystick integrado com sucesso para Player " + (id + 1));
+                } else {
+                    System.out.println("  Nenhum joystick detectado para Player " + (id + 1));
+                }
+            } catch (Exception e) {
+                System.err.println(" Falha ao acessar joystick para Player " + (id + 1) + ": " + e.getMessage());
+                this.joystickManager = null;
+            }
+
+        }
+
+
+   
+
+    public short getKeyState(int padKey) {
+        return (short) (allKeysState[keyMapping[padKey]] ? 0x41 : 0x40);
+    }
+
+    
+
+    public void mapKey(int padKey, int kbKeycode) {
+        keyMapping[padKey] = kbKeycode;
+    }
+
+    public void keyPressed(KeyEvent ke) {
+
+        int kc = ke.getKeyCode();
+        if (kc >= allKeysState.length) {
+            return;
+        }
+
+        allKeysState[kc] = true;
+
+        // Can't hold both left & right or up & down at same time:
+        if (kc == keyMapping[InputHandler.KEY_LEFT]) {
+            allKeysState[keyMapping[InputHandler.KEY_RIGHT]] = false;
+        } else if (kc == keyMapping[InputHandler.KEY_RIGHT]) {
+            allKeysState[keyMapping[InputHandler.KEY_LEFT]] = false;
+        } else if (kc == keyMapping[InputHandler.KEY_UP]) {
+            allKeysState[keyMapping[InputHandler.KEY_DOWN]] = false;
+        } else if (kc == keyMapping[InputHandler.KEY_DOWN]) {
+            allKeysState[keyMapping[InputHandler.KEY_UP]] = false;
+        }
+    }
+
+    public void keyReleased(KeyEvent ke) {
+
+        int kc = ke.getKeyCode();
+        if (kc >= allKeysState.length) {
+            return;
+        }
+
+        allKeysState[kc] = false;
+
+        if (id == 0) {
+            switch (kc) {
+                case KeyEvent.VK_F5: {
+                    // Reset game:
+                    if (nes.isRunning()) {
+                        nes.stopEmulation();
+                        nes.reset();
+                        nes.reloadRom();
+                        nes.startEmulation();
+                    }
+                    break;
+                }
+                case KeyEvent.VK_F10: {
+                    // Just using this to display the battery RAM contents to user.
+                    if (nes.rom != null) {
+                        nes.rom.closeRom();
+                    }
+                    break;
+                }
+            }
+        }
+
+    }
+
+    public JoystickManager getJoystickManager(){
+        return this.joystickManager;
+    }
+
+    
+    public void keyTyped(KeyEvent ke) {
+        // Ignore.
+    }
+
+    public void reset() {
+        allKeysState = new boolean[255];
+    }
+
+    public void update() {
+        // doesn't do anything.
+    }
+
+    public void destroy() {
+        nes = null;
+    }
+
+    public void cleanup() {
+            if (joystickManager != null) {
+                joystickManager.releaseAllKeys();
+            }
+        }
+
+
+  
+
+   
+
+    
+
+   
+
+   
+
+   
+}
