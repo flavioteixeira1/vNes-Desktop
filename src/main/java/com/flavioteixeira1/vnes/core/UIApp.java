@@ -12,7 +12,7 @@ public class UIApp implements UI{
 	ScreenView vScreen;
 	HiResTimer timer;
 	private InputHandler inputHandler;
-	//private InputHandler inputHandler2;
+	private InputHandler inputHandlerPlayer2;
 	
 	
 	long t1,t2;
@@ -26,25 +26,39 @@ public class UIApp implements UI{
 	public void initNES() {
 		System.out.println("UIApp.initNES() - Criando nova instância do NES");
 		nes = new NES(this);
-		inputHandler = new KbInputHandler(nes,0);
-		//inputHandler2 = new KbInputHandler(nes,1);
+		inputHandler = new KbInputHandler(nes,0); // Player 1
+		inputHandlerPlayer2 = new KbInputHandler(nes,1); // Player 2
 		//Debug
-		System.out.println("🎮 === vNes Joystick Integration ===");
-		System.out.println("📍 InputHandler criado em: " + this.getClass().getSimpleName());
-
-		if (inputHandler instanceof KbInputHandler) {
-   		 JoystickManager jm = ((KbInputHandler) inputHandler).getJoystickManager();
-   			 if (jm != null) {
-        			System.out.println("✅ Joystick: " + jm.getJoystickName());
-        			System.out.println("🎯 Mapeamento ativo:");
-        			System.out.println("   Botão 0 -> Z (A)");
-        			System.out.println("   Botão 1 -> X (B)");
-        			System.out.println("   Botão 2 -> Enter (Start)");
-        			System.out.println("   Botão 3 -> Ctrl (Select)");
-        			System.out.println("   Eixos -> Setas direcionais");
-    			}
-		}
-		
+		System.out.println(" === vNes Joystick Integration ===");
+		 // Player 1
+		 if (inputHandler instanceof KbInputHandler) {
+            JoystickManager jm = ((KbInputHandler) inputHandler).getJoystickManager();
+            if (jm != null && jm.isJoystickEnabled()) {
+                System.out.println(" Player 1 - Joystick: " + jm.getJoystickName());
+                System.out.println(" Player 1 - Mapeamento ativo:");
+                System.out.println("   Botão 0 -> Z (A)");
+                System.out.println("   Botão 1 -> X (B)");
+                System.out.println("   Botão 2 -> Enter (Start)");
+                System.out.println("   Botão 3 -> Ctrl (Select)");
+                System.out.println("   Eixos -> Setas direcionais");
+            }
+        }
+		 // Player 2
+		if (inputHandlerPlayer2 instanceof KbInputHandler) {
+            JoystickManager jm2 = ((KbInputHandler) inputHandlerPlayer2).getJoystickManager();
+            if (jm2 != null && jm2.isJoystickEnabled()) {
+                System.out.println(" Player 2 - Joystick: " + jm2.getJoystickName());
+                System.out.println(" Player 2 - Mapeamento ativo:");
+                System.out.println("   Botão 0 -> VK_NUMPAD7 (A)");
+                System.out.println("   Botão 1 -> VK_NUMPAD9 (B)");
+                System.out.println("   Botão 2 -> VK_NUMPAD1 (Start)");
+                System.out.println("   Botão 3 -> VK_NUMPAD3 (Select)");
+                System.out.println("   UP -> VK_NUMPAD8");
+                System.out.println("   DOWN -> VK_NUMPAD2");
+                System.out.println("   LEFT -> VK_NUMPAD4");
+                System.out.println("   RIGHT -> VK_NUMPAD6");
+            }
+        }
 		
 		// Inicializar componentes visuais se ainda não existirem
 		if (vScreen == null) {
@@ -56,31 +70,38 @@ public class UIApp implements UI{
 	}
 
 
-	public JoystickManager getJoystickManager() {
-			if (inputHandler instanceof KbInputHandler) {
-				return ((KbInputHandler) inputHandler).getJoystickManager();
+	public JoystickManager getJoystickManager(int playerId) {
+				if (playerId == 0) {
+				if (inputHandler instanceof KbInputHandler) {
+					return ((KbInputHandler) inputHandler).getJoystickManager();
+				}
+			} else {
+				if (inputHandlerPlayer2 instanceof KbInputHandler) {
+					return ((KbInputHandler) inputHandlerPlayer2).getJoystickManager();
+				}
 			}
 			return null;
-		}
+	}
 	
-	public boolean isJoystickEnabled() {
-		JoystickManager jm = getJoystickManager();
-		return jm != null && jm.isJoystickEnabled();
+	public boolean isJoystickEnabled(int playerId) {
+		JoystickManager jm = getJoystickManager(playerId);
+        return jm != null && jm.isJoystickEnabled();	
 	}
 
 
-	public void showJoystickConfig(Frame parentFrame) {
-    JoystickManager jm = getJoystickManager();
-		if (jm != null && jm.isJoystickEnabled()) {
-			JoystickConfigDialog dialog = new JoystickConfigDialog(parentFrame, jm);
-			dialog.setVisible(true);
-		} else {
-			JOptionPane.showMessageDialog(parentFrame,
-				"Nenhum joystick detectado!\n\n" +
-				"Conecte um joystick e reinicie o emulador.",
-				"Joystick Não Encontrado",
-				JOptionPane.WARNING_MESSAGE);
-		}
+	public void showJoystickConfig(Frame parentFrame , int playerId) {
+		JoystickManager jm = getJoystickManager(playerId);
+			if (jm != null && jm.isJoystickEnabled()) {
+				JoystickConfigDialog dialog = new JoystickConfigDialog(parentFrame, jm, playerId);
+				dialog.setVisible(true);
+			} else {
+				JOptionPane.showMessageDialog(parentFrame,
+					"Nenhum joystick detectado para Player " + (playerId + 1) + "!\n\n" +
+					"Conecte um joystick e reinicie o emulador.\n" +
+					"Verifique se o java possui jinput-dx8_64, jinput-raw_64 ou libjinput-linux64 conforme o sistema operacional",
+					"Joystick Não Encontrado - Player " + (playerId + 1),
+					JOptionPane.WARNING_MESSAGE);
+			}
 	}
 
 	

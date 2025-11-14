@@ -97,15 +97,21 @@ public class RockmanForm extends Applet implements Runnable, ActionListener {
             // Menu do Joystick
             JMenu joystickMenu = new JMenu("Joystick");
             
-            // Item para configurar joystick
-            JMenuItem configJoystickItem = new JMenuItem("Configurar Joystick...");
-            configJoystickItem.addActionListener(e -> showJoystickConfig());
-            joystickMenu.add(configJoystickItem);
-            
-            // Item para status do joystick
-            JMenuItem joystickStatusItem = new JMenuItem("Status do Joystick");
+            // Item para status global dos joysticks
+            JMenuItem joystickStatusItem = new JMenuItem("Status dos Joysticks");
             joystickStatusItem.addActionListener(e -> showJoystickStatus());
             joystickMenu.add(joystickStatusItem);
+            // Separador
+            joystickMenu.addSeparator();
+             // Configuração individual por jogador
+            JMenuItem configJoystick1Item = new JMenuItem("Configurar Joystick - Player 1");
+            configJoystick1Item.addActionListener(e -> showJoystickConfig(0));
+            joystickMenu.add(configJoystick1Item);
+            
+            JMenuItem configJoystick2Item = new JMenuItem("Configurar Joystick - Player 2");
+            configJoystick2Item.addActionListener(e -> showJoystickConfig(1));
+            joystickMenu.add(configJoystick2Item);
+            
             
             menuBar.add(joystickMenu);
             parentFrame.setJMenuBar(menuBar);
@@ -118,9 +124,9 @@ public class RockmanForm extends Applet implements Runnable, ActionListener {
 
     
 
-    private void showJoystickConfig() {
-        if (gui != null) {
-            gui.showJoystickConfig(parentFrame);
+    private void showJoystickConfig(int playerId) {
+         if (gui != null) {
+            gui.showJoystickConfig(parentFrame, playerId);
         } else {
             JOptionPane.showMessageDialog(parentFrame,
                 "Emulador não inicializado corretamente.",
@@ -131,33 +137,15 @@ public class RockmanForm extends Applet implements Runnable, ActionListener {
 
 
     private void showJoystickStatus() {
-        if (gui != null && gui.isJoystickEnabled()) {
-            JoystickManager jm = gui.getJoystickManager();
-            if (jm != null) {
-                String status = "🎮 Status do Joystick\n\n" +
-                            "Nome: " + jm.getJoystickName() + "\n" +
-                            "Status: ✅ Conectado e Funcionando\n\n" +
-                            "📋 Mapeamento Atual:\n" +
-                            "  Botão 0 -> Z (A)\n" +
-                            "  Botão 1 -> X (B)\n" +
-                            "  Botão 2 -> Enter (Start)\n" +
-                            "  Botão 3 -> Ctrl (Select)\n" +
-                            "  Eixos -> Setas direcionais\n\n" +
-                            "Use 'Configurar Joystick' para alterar o mapeamento.";
-                
-                JOptionPane.showMessageDialog(parentFrame, status, 
-                    "Status do Joystick", JOptionPane.INFORMATION_MESSAGE);
-            }
-        } else {
-            JOptionPane.showMessageDialog(parentFrame,
-                "Nenhum joystick detectado ou emulador não inicializado.\n\n" +
-                "Verifique se:\n" +
-                "• O joystick está conectado\n" +
-                "• Os drivers estão instalados\n" +
-                "• O emulador foi reiniciado após conectar o joystick",
-                "Joystick Não Detectado",
-                JOptionPane.WARNING_MESSAGE);
-        }
+         String status = JoystickManager.getGlobalStatus();
+        
+        status += "\n📋 Mapeamento Padrão:\n";
+        status += "Player 1: Setas (Direção) | Z (A) | X (B) | Enter (Start) | Ctrl (Select)\n";
+        status += "Player 2: Teclado Numérico (2,4,6,8) | 7 (A) | 9 (B) | 1 (Start) | 3 (Select)\n\n";
+        status += "Use 'Configurar Joystick' para alterar o mapeamento.";
+        
+        JOptionPane.showMessageDialog(parentFrame, status, 
+            "Status dos Joysticks", JOptionPane.INFORMATION_MESSAGE);
     }
 
 
@@ -342,8 +330,8 @@ public class RockmanForm extends Applet implements Runnable, ActionListener {
     private void loadNewRom(String romPath) {
         System.out.println("RockmanForm.loadNewRom() - Iniciando carregamento de nova ROM");
         // Pausar joystick antes de começar
-        if (JoystickManager.isInitialized()) {
-                JoystickManager.getInstance().pausePolling();}
+        if (JoystickManager.isInitializedForPlayer(0)) {
+                JoystickManager.getInstanceForPlayer(0).pausePolling();}
 
             try{ System.out.println("Caminho: " + romPath);
                 
@@ -433,11 +421,11 @@ public class RockmanForm extends Applet implements Runnable, ActionListener {
 
             }finally {
             // Retomar joystick após conclusão (com delay para estabilização)
-            if (JoystickManager.isInitialized()) {
+            if (JoystickManager.isInitializedForPlayer(0)) {
                 new Thread(() -> {
                     try {
                         Thread.sleep(1000); // 1 segundo para estabilização
-                        JoystickManager.getInstance().resumePolling();
+                        JoystickManager.getInstanceForPlayer(0).resumePolling();
                     } catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
                     }
@@ -740,8 +728,6 @@ public class RockmanForm extends Applet implements Runnable, ActionListener {
         paint(g);
     }
     
-    // ... resto dos métodos readParams() permanecem iguais
-
 	
 	public void readParams(){
 		

@@ -14,10 +14,12 @@ public class JoystickConfigDialog extends JDialog {
     private JButton cancelButton;
     private int waitingForButton = -1;
     private JLabel instructionLabel;
+    private int playerId;
 
-    public JoystickConfigDialog(Frame parent, JoystickManager joystickManager) {
-        super(parent, "Configuração do Joystick", true);
+    public JoystickConfigDialog(Frame parent, JoystickManager joystickManager, int playerId) {
+        super(parent, "Configuração do Joystick - Player " + (playerId + 1), true);
         this.joystickManager = joystickManager;
+        this.playerId = playerId;
         this.buttonMap = new HashMap<>();
         this.currentMapping = new HashMap<>();
         
@@ -77,10 +79,17 @@ public class JoystickConfigDialog extends JDialog {
     
     private void loadCurrentMapping() {
         // Usar mapeamento padrão
-        currentMapping.put(0, KeyEvent.VK_Z);      // A
-        currentMapping.put(1, KeyEvent.VK_X);      // B  
-        currentMapping.put(2, KeyEvent.VK_ENTER);  // Start
-        currentMapping.put(3, KeyEvent.VK_CONTROL); // Select
+        if (playerId == 0) {
+            currentMapping.put(0, KeyEvent.VK_Z);      // A
+            currentMapping.put(1, KeyEvent.VK_X);      // B  
+            currentMapping.put(2, KeyEvent.VK_ENTER);  // Start
+            currentMapping.put(3, KeyEvent.VK_CONTROL); // Select
+        } else {
+            currentMapping.put(0, KeyEvent.VK_NUMPAD7); // A
+            currentMapping.put(1, KeyEvent.VK_NUMPAD9); // B  
+            currentMapping.put(2, KeyEvent.VK_NUMPAD1); // Start
+            currentMapping.put(3, KeyEvent.VK_NUMPAD3); // Select
+        }
         
         updateButtonLabels();
     }

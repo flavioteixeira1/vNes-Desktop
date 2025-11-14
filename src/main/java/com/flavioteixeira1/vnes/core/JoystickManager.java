@@ -7,11 +7,14 @@ import java.awt.event.KeyEvent;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.ArrayList;
+import java.util.List;
+
 
 public class JoystickManager {
     // Singleton instance
-    private static JoystickManager instance;
-    
+    private static JoystickManager instancePlayer1;
+    private static JoystickManager instancePlayer2;
     private Controller joystick;
     private Component[] components;
     private boolean[] lastButtonStates;
@@ -31,49 +34,66 @@ public class JoystickManager {
     
     // Thread de polling
     private Thread pollingThread;
+
+    // Identificador do jogador (0 = Player 1, 1 = Player 2)
+    private int playerId;
+
+    // Nome do joystick para debug
+    private String joystickName;
     
     // Contador de instâncias para debug
     private static int instanceCount = 0;
 
     private boolean isWindows = System.getProperty("os.name").toLowerCase().contains("win");
     
-    // Construtor privado para singleton
-    private JoystickManager() {
-        instanceCount++;
-        System.out.println(" JoystickManager instância " + instanceCount + " criada");
+    // Construtor privado 
+    private JoystickManager(int playerId) {
+        this.playerId = playerId;
+        System.out.println(" JoystickManager instância criada para Player " + (playerId + 1));
         
         try {
             this.robot = new Robot();
             this.keyStates = new boolean[256];
             setupDefaultMapping();
-            initJoystick();
+            initJoystick(playerId);
             
             if (joystickEnabled.get()) {
                 startPollingThread();
             }
         } catch (AWTException e) {
-            System.err.println("Erro ao criar Robot: " + e.getMessage());
+            System.err.println("Erro ao criar Robot para Player " + (playerId + 1) + ": " + e.getMessage());
         } catch (Exception e) {
-            System.err.println("Erro ao inicializar joystick: " + e.getMessage());
+            System.err.println("Erro ao inicializar joystick para Player " + (playerId + 1) + ": " + e.getMessage());
         }
     }
     
-    // Método singleton
-    public static synchronized JoystickManager getInstance() {
-        if (instance == null) {
-            instance = new JoystickManager();
+    // Métodos estáticos para obter instâncias específicas
+    public static synchronized JoystickManager  getInstanceForPlayer(int playerId) {
+        if (playerId == 0) {
+            if (instancePlayer1 == null) {
+                instancePlayer1 = new JoystickManager(0);
+            }
+            return instancePlayer1;
+        } else {
+            if (instancePlayer2 == null) {
+                instancePlayer2 = new JoystickManager(1);
+            }
+            return instancePlayer2;
         }
-        return instance;
     }
     
-    // Método para verificar se o singleton foi inicializado
-    public static boolean isInitialized() {
-        return instance != null;
+     // Método para verificar se uma instância foi inicializada
+    public static boolean isInitializedForPlayer(int playerId) {
+       if (playerId == 0) {
+            return instancePlayer1 != null;
+        } else {
+            return instancePlayer2 != null;
+        }
     }
     
-    private void initJoystick() {
+    private void initJoystick(int playerId) {
         try {
-            System.out.println(" Inicializando joystick...");
+            System.out.println(" Inicializando joystick para Player " + (playerId + 1)+ "...");
             
             // Verificar se JInput está disponível
             try {
@@ -90,51 +110,58 @@ public class JoystickManager {
                 System.out.println(" Nenhum controller encontrado.");
                 return;
             }
-            
-            boolean found = false;
+             // Lista de controladores disponíveis
+            List<Controller> availableControllers = new ArrayList<>();
             for (Controller controller : controllers) {
-                System.out.println("Controller disponível: " + controller.getName() + " - Tipo: " + controller.getType());
-                
                 if (controller.getType() == Controller.Type.STICK || 
                     controller.getType() == Controller.Type.GAMEPAD) {
-                    
-                    this.joystick = controller;
-                    this.components = controller.getComponents();
-                    this.lastButtonStates = new boolean[components.length];
-                    this.lastAxisStates = new float[components.length];
-                    this.joystickEnabled.set(true);
-                    
-                    System.out.println("Joystick selecionado: " + controller.getName());
-                    System.out.println("Componentes: " + components.length);
-
-                     // Detectar automaticamente o offset dos botões
-                    int buttonOffset = detectButtonOffset();
-                    System.out.println("Offset de botões detectado: " + buttonOffset);
-                
-                    // Ajustar o mapeamento baseado no offset
-                    adjustButtonMapping(buttonOffset);
-                    
-                    // Debug: listar componentes
-                    for (int i = 0; i < components.length; i++) {
-                        Component comp = components[i];
-                        System.out.println("  Component " + i + ": " + comp.getName() + 
-                                         " (" + comp.getIdentifier() + ") - Analog: " + comp.isAnalog());
-                    }
-                    found = true;
-                    break;
+                    availableControllers.add(controller);
                 }
             }
             
-            if (!found) {
-                System.out.println("Nenhum joystick/gamepad compatível encontrado.");
+            if (availableControllers.isEmpty()) {
+                System.out.println(" Nenhum joystick/gamepad compatível encontrado para Player " + (playerId + 1));
+                return;
+            }
+            
+            // Selecionar controlador baseado no playerId
+            if (playerId < availableControllers.size()) {
+                this.joystick = availableControllers.get(playerId);
+                this.components = joystick.getComponents();
+                this.lastButtonStates = new boolean[components.length];
+                this.lastAxisStates = new float[components.length];
+                this.joystickEnabled.set(true);
+                this.joystickName = joystick.getName();
+                
+                System.out.println("Joystick selecionado para Player " + (playerId + 1) + ": " + joystickName);
+                System.out.println("Componentes: " + components.length);
+
+                // Detectar automaticamente o offset dos botões
+                int buttonOffset = detectButtonOffset();
+                System.out.println("Offset de botões detectado: " + buttonOffset);
+            
+                // Ajustar o mapeamento baseado no offset
+                adjustButtonMapping(buttonOffset);
+                
+                // Debug: listar componentes
+                for (int i = 0; i < components.length; i++) {
+                    Component comp = components[i];
+                    System.out.println("  Component " + i + ": " + comp.getName() + 
+                                     " (" + comp.getIdentifier() + ") - Analog: " + comp.isAnalog());
+                }
+            } else {
+                System.out.println("Não há controlador suficiente para Player " + (playerId + 1));
+                System.out.println("Controladores disponíveis: " + availableControllers.size());
+                for (int i = 0; i < availableControllers.size(); i++) {
+                    System.out.println("  " + i + ": " + availableControllers.get(i).getName());
+                }
             }
             
         } catch (UnsatisfiedLinkError e) {
             System.err.println("Biblioteca nativa do JInput não disponível: " + e.getMessage());
             System.err.println("O suporte a joystick será desabilitado");
         } catch (Exception e) {
-            System.err.println("Erro ao inicializar joystick: " + e.getMessage());
-            // Não imprimir stack trace para evitar poluição visual
+            System.err.println("Erro ao inicializar joystick para Player " + (playerId + 1) + ": " + e.getMessage());
         }
     }
 
@@ -208,16 +235,25 @@ public class JoystickManager {
 
         int buttonStartIndex = isWindows ? 6 : 0; // Windows: botões começam em 6, Linux em 0
         
-        // Mapeamento padrão para NES
-        buttonToKeyMapping.put(0, KeyEvent.VK_Z);      // A button
-        buttonToKeyMapping.put(1, KeyEvent.VK_X);      // B button  
-        buttonToKeyMapping.put(2, KeyEvent.VK_ENTER);  // Start
-        buttonToKeyMapping.put(3, KeyEvent.VK_CONTROL); // Select
-        buttonToKeyMapping.put(4, KeyEvent.VK_A);      // Extra 1
-        buttonToKeyMapping.put(5, KeyEvent.VK_S);      // Extra 2
+        if (playerId == 0) {
+            // Mapeamento padrão para Player 1 (teclado principal)
+            buttonToKeyMapping.put(0, KeyEvent.VK_Z);      // A button
+            buttonToKeyMapping.put(1, KeyEvent.VK_X);      // B button  
+            buttonToKeyMapping.put(2, KeyEvent.VK_ENTER);  // Start
+            buttonToKeyMapping.put(3, KeyEvent.VK_CONTROL); // Select
+            buttonToKeyMapping.put(4, KeyEvent.VK_A);      // Extra 1
+            buttonToKeyMapping.put(5, KeyEvent.VK_S);      // Extra 2
+        } else {
+            // Mapeamento padrão para Player 2 (teclado numérico)
+            buttonToKeyMapping.put(0, KeyEvent.VK_NUMPAD7); // A button
+            buttonToKeyMapping.put(1, KeyEvent.VK_NUMPAD9); // B button  
+            buttonToKeyMapping.put(2, KeyEvent.VK_NUMPAD1); // Start
+            buttonToKeyMapping.put(3, KeyEvent.VK_NUMPAD3); // Select
+            buttonToKeyMapping.put(4, KeyEvent.VK_NUMPAD4); // Extra 1
+            buttonToKeyMapping.put(5, KeyEvent.VK_NUMPAD6); // Extra 2
+        }
         
-        //System.out.println(" Mapeamento configurado:");
-        System.out.println("  Mapeamento configurado (OS: " + System.getProperty("os.name") + "):");
+        System.out.println(" Mapeamento configurado para Player " + (playerId + 1) + " (OS: " + System.getProperty("os.name") + "):");
         for (Map.Entry<Integer, Integer> entry : buttonToKeyMapping.entrySet()) {
             System.out.println("  Botão " + entry.getKey() + " -> " + getKeyName(entry.getValue()));
         }
@@ -301,17 +337,26 @@ public class JoystickManager {
     private void processAnalogComponent(Component comp, float currentValue, int index) {
         Component.Identifier identifier = comp.getIdentifier();
         
-        if (identifier == Component.Identifier.Axis.X) {
-            processAxis(currentValue, KeyEvent.VK_LEFT, KeyEvent.VK_RIGHT);
-        } 
-        else if (identifier == Component.Identifier.Axis.Y) {
-            processAxis(currentValue, KeyEvent.VK_UP, KeyEvent.VK_DOWN);
-        }
-        else if (identifier == Component.Identifier.Axis.POV) {
-            processPOVAxis(currentValue);
-        }
-        
-        lastAxisStates[index] = currentValue;
+        // Mapeamento de eixos específico por jogador
+            if (identifier == Component.Identifier.Axis.X) {
+                if (playerId == 0) {
+                    processAxis(currentValue, KeyEvent.VK_LEFT, KeyEvent.VK_RIGHT);
+                } else {
+                    processAxis(currentValue, KeyEvent.VK_NUMPAD4, KeyEvent.VK_NUMPAD6);
+                }
+            } 
+            else if (identifier == Component.Identifier.Axis.Y) {
+                if (playerId == 0) {
+                    processAxis(currentValue, KeyEvent.VK_UP, KeyEvent.VK_DOWN);
+                } else {
+                    processAxis(currentValue, KeyEvent.VK_NUMPAD8, KeyEvent.VK_NUMPAD2);
+                }
+            }
+            else if (identifier == Component.Identifier.Axis.POV) {
+                processPOVAxis(currentValue);
+            }
+            
+            lastAxisStates[index] = currentValue;
     }
     
     private void processAxis(float currentValue, int negativeKey, int positiveKey) {
@@ -350,17 +395,34 @@ public class JoystickManager {
             }
         }
         
-        if (upPressed != keyStates[KeyEvent.VK_UP]) {
-            dispatchKeyEvent(KeyEvent.VK_UP, upPressed);
-        }
-        if (downPressed != keyStates[KeyEvent.VK_DOWN]) {
-            dispatchKeyEvent(KeyEvent.VK_DOWN, downPressed);
-        }
-        if (leftPressed != keyStates[KeyEvent.VK_LEFT]) {
-            dispatchKeyEvent(KeyEvent.VK_LEFT, leftPressed);
-        }
-        if (rightPressed != keyStates[KeyEvent.VK_RIGHT]) {
-            dispatchKeyEvent(KeyEvent.VK_RIGHT, rightPressed);
+         if (playerId == 0) {
+            // Player 1 - setas direcionais
+            if (upPressed != keyStates[KeyEvent.VK_UP]) {
+                dispatchKeyEvent(KeyEvent.VK_UP, upPressed);
+            }
+            if (downPressed != keyStates[KeyEvent.VK_DOWN]) {
+                dispatchKeyEvent(KeyEvent.VK_DOWN, downPressed);
+            }
+            if (leftPressed != keyStates[KeyEvent.VK_LEFT]) {
+                dispatchKeyEvent(KeyEvent.VK_LEFT, leftPressed);
+            }
+            if (rightPressed != keyStates[KeyEvent.VK_RIGHT]) {
+                dispatchKeyEvent(KeyEvent.VK_RIGHT, rightPressed);
+            }
+        } else {
+            // Player 2 - teclado numérico
+            if (upPressed != keyStates[KeyEvent.VK_NUMPAD8]) {
+                dispatchKeyEvent(KeyEvent.VK_NUMPAD8, upPressed);
+            }
+            if (downPressed != keyStates[KeyEvent.VK_NUMPAD2]) {
+                dispatchKeyEvent(KeyEvent.VK_NUMPAD2, downPressed);
+            }
+            if (leftPressed != keyStates[KeyEvent.VK_NUMPAD4]) {
+                dispatchKeyEvent(KeyEvent.VK_NUMPAD4, leftPressed);
+            }
+            if (rightPressed != keyStates[KeyEvent.VK_NUMPAD6]) {
+                dispatchKeyEvent(KeyEvent.VK_NUMPAD6, rightPressed);
+            }
         }
     }
     
@@ -414,7 +476,11 @@ public class JoystickManager {
     }
     
     public String getJoystickName() {
-        return joystick != null ? joystick.getName() : "Nenhum joystick";
+         return joystick != null ? joystickName + " (Player " + (playerId + 1) + ")" : "Nenhum joystick";
+    }
+
+    public int getPlayerId() {
+        return playerId;
     }
     
     public void releaseAllKeys() {
@@ -429,7 +495,27 @@ public class JoystickManager {
             }
         }
     }
-    
+
+    // Método estático para verificar status de ambos os jogadores
+    public static String getGlobalStatus() {
+        StringBuilder status = new StringBuilder();
+        status.append("🎮 Status dos Joysticks\n\n");
+        
+        if (instancePlayer1 != null && instancePlayer1.isJoystickEnabled()) {
+            status.append("Player 1: ✅ ").append(instancePlayer1.getJoystickName()).append("\n");
+        } else {
+            status.append("Player 1: ❌ Não conectado\n");
+        }
+        
+        if (instancePlayer2 != null && instancePlayer2.isJoystickEnabled()) {
+            status.append("Player 2: ✅ ").append(instancePlayer2.getJoystickName()).append("\n");
+        } else {
+            status.append("Player 2: ❌ Não conectado\n");
+        }
+        
+        return status.toString();
+    }
+
     public void cleanup() {
         pausePolling();
         releaseAllKeys();
@@ -437,12 +523,19 @@ public class JoystickManager {
         joystick = null;
         System.out.println(" JoystickManager limpo");
     }
+
     
-    // Método estático para limpeza global
+    // Método estático para limpeza global de ambos os jogadores
     public static void globalCleanup() {
-        if (instance != null) {
-            instance.cleanup();
-            instance = null;
+        if (instancePlayer1 != null) {
+            instancePlayer1.cleanup();
+            instancePlayer1 = null;
+        }
+        if (instancePlayer2 != null) {
+            instancePlayer2.cleanup();
+            instancePlayer2 = null;
         }
     }
+
+    
 }

@@ -16,22 +16,21 @@ public class KbInputHandler implements KeyListener, InputHandler {
 
     public KbInputHandler(NES nes, int id) {
         this.nes = nes;
-        this.id = id;
+        this.id = id; // 0 = Player 1, 1 = Player 2
         allKeysState = new boolean[255];
         keyMapping = new int[InputHandler.NUM_KEYS];
         keystate = new boolean[0x100];
         keymap = new int[0x100];
-        // Inicializar joystick manager
-        // Usar singleton do JoystickManager
+         // Inicializar joystick manager específico para este jogador
             try {
-                this.joystickManager = JoystickManager.getInstance();
+                this.joystickManager = JoystickManager.getInstanceForPlayer(id);
                 if (joystickManager.isJoystickEnabled()) {
-                    System.out.println(" Joystick integrado com sucesso!");
+                    System.out.println(" Joystick integrado com sucesso para Player " + (id + 1));
                 } else {
-                    System.out.println("  Nenhum joystick detectado ou bibliotecas não disponíveis.");
+                    System.out.println("  Nenhum joystick detectado para Player " + (id + 1));
                 }
             } catch (Exception e) {
-                System.err.println(" Falha ao acessar joystick: " + e.getMessage());
+                System.err.println(" Falha ao acessar joystick para Player " + (id + 1) + ": " + e.getMessage());
                 this.joystickManager = null;
             }
 

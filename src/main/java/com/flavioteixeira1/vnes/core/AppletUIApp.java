@@ -65,8 +65,8 @@ public class AppletUIApp implements UI{
 		if (inputHandler instanceof KbInputHandler) {
    		 JoystickManager jm = ((KbInputHandler) inputHandler).getJoystickManager();
    			 if (jm != null) {
-        			System.out.println("✅ Joystick Player1: " + jm.getJoystickName());
-        			System.out.println("🎯 Mapeamento ativo:");
+        			System.out.println(" Joystick Player1: " + jm.getJoystickName());
+        			System.out.println(" Mapeamento ativo:");
         			System.out.println("   Botão 0 -> Z (A)");
         			System.out.println("   Botão 1 -> X (B)");
         			System.out.println("   Botão 2 -> Enter (Start)");
@@ -96,7 +96,7 @@ public class AppletUIApp implements UI{
 	public void showJoystickConfig(Frame parentFrame) {
     JoystickManager jm = getJoystickManager();
 		if (jm != null && jm.isJoystickEnabled()) {
-			JoystickConfigDialog dialog = new JoystickConfigDialog(parentFrame, jm);
+			JoystickConfigDialog dialog = new JoystickConfigDialog(parentFrame, jm,0);
 			dialog.setVisible(true);
 		} else {
 			JOptionPane.showMessageDialog(parentFrame,
