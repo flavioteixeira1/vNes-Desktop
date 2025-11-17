@@ -22,6 +22,9 @@ public class JoystickManager {
     private AtomicBoolean joystickEnabled = new AtomicBoolean(false);
     private AtomicBoolean pollingActive = new AtomicBoolean(false);
     private Robot robot;
+
+    //Mapeamento para eixos
+    private Map<Component.Identifier, Integer[]> axisToKeyMapping;
     
     // Mapeamento de botões para teclas
     private Map<Integer, Integer> buttonToKeyMapping;
@@ -232,25 +235,28 @@ public class JoystickManager {
     
     private void setupDefaultMapping() {
         buttonToKeyMapping = new HashMap<>();
+        axisToKeyMapping = new HashMap<>();
 
         int buttonStartIndex = isWindows ? 6 : 0; // Windows: botões começam em 6, Linux em 0
         
         if (playerId == 0) {
-            // Mapeamento padrão para Player 1 (teclado principal)
+            // Player 1 - Botões
             buttonToKeyMapping.put(0, KeyEvent.VK_Z);      // A button
             buttonToKeyMapping.put(1, KeyEvent.VK_X);      // B button  
             buttonToKeyMapping.put(2, KeyEvent.VK_ENTER);  // Start
             buttonToKeyMapping.put(3, KeyEvent.VK_CONTROL); // Select
-            buttonToKeyMapping.put(4, KeyEvent.VK_A);      // Extra 1
-            buttonToKeyMapping.put(5, KeyEvent.VK_S);      // Extra 2
+            // Player 1 - Eixos
+            axisToKeyMapping.put(Component.Identifier.Axis.X,new Integer[]{KeyEvent.VK_LEFT, KeyEvent.VK_RIGHT});
+            axisToKeyMapping.put(Component.Identifier.Axis.Y,new Integer[]{KeyEvent.VK_UP, KeyEvent.VK_DOWN});
         } else {
-            // Mapeamento padrão para Player 2 (teclado numérico)
+            // Player 2 - Botões
             buttonToKeyMapping.put(0, KeyEvent.VK_NUMPAD7); // A button
             buttonToKeyMapping.put(1, KeyEvent.VK_NUMPAD9); // B button  
             buttonToKeyMapping.put(2, KeyEvent.VK_NUMPAD1); // Start
             buttonToKeyMapping.put(3, KeyEvent.VK_NUMPAD3); // Select
-            buttonToKeyMapping.put(4, KeyEvent.VK_NUMPAD4); // Extra 1
-            buttonToKeyMapping.put(5, KeyEvent.VK_NUMPAD6); // Extra 2
+             // Player 2 - Eixos
+            axisToKeyMapping.put(Component.Identifier.Axis.X,new Integer[]{KeyEvent.VK_NUMPAD4, KeyEvent.VK_NUMPAD6});
+            axisToKeyMapping.put(Component.Identifier.Axis.Y,new Integer[]{KeyEvent.VK_NUMPAD8, KeyEvent.VK_NUMPAD2});
         }
         
         System.out.println(" Mapeamento configurado para Player " + (playerId + 1) + " (OS: " + System.getProperty("os.name") + "):");
@@ -258,6 +264,13 @@ public class JoystickManager {
             System.out.println("  Botão " + entry.getKey() + " -> " + getKeyName(entry.getValue()));
         }
     }
+
+    public void setAxisMapping(Component.Identifier axis, int negativeKey, int positiveKey) {
+        axisToKeyMapping.put(axis, new Integer[]{negativeKey, positiveKey});
+        System.out.println("Eixo " + axis + " mapeado para " + 
+                         getKeyName(negativeKey) + "/" + getKeyName(positiveKey));
+    }
+
     
     private void startPollingThread() {
         if (pollingThread != null && pollingThread.isAlive()) {
@@ -337,24 +350,12 @@ public class JoystickManager {
     private void processAnalogComponent(Component comp, float currentValue, int index) {
         Component.Identifier identifier = comp.getIdentifier();
         
-        // Mapeamento de eixos específico por jogador
-            if (identifier == Component.Identifier.Axis.X) {
-                if (playerId == 0) {
-                    processAxis(currentValue, KeyEvent.VK_LEFT, KeyEvent.VK_RIGHT);
-                } else {
-                    processAxis(currentValue, KeyEvent.VK_NUMPAD4, KeyEvent.VK_NUMPAD6);
-                }
-            } 
-            else if (identifier == Component.Identifier.Axis.Y) {
-                if (playerId == 0) {
-                    processAxis(currentValue, KeyEvent.VK_UP, KeyEvent.VK_DOWN);
-                } else {
-                    processAxis(currentValue, KeyEvent.VK_NUMPAD8, KeyEvent.VK_NUMPAD2);
-                }
-            }
-            else if (identifier == Component.Identifier.Axis.POV) {
-                processPOVAxis(currentValue);
-            }
+        if (axisToKeyMapping.containsKey(identifier)) {
+            Integer[] keys = axisToKeyMapping.get(identifier);
+            processAxis(currentValue, keys[0], keys[1]);
+        } else if (identifier == Component.Identifier.Axis.POV) {
+            processPOVAxis(currentValue);
+        }
             
             lastAxisStates[index] = currentValue;
     }

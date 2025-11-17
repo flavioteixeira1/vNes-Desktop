@@ -38,6 +38,100 @@ public class KbInputHandler implements KeyListener, InputHandler {
 
 
    
+    public void remapKey(int nesButton, int newKeyCode) {
+        if (nesButton >= 0 && nesButton < NUM_KEYS) {
+            keyMapping[nesButton] = newKeyCode;
+            System.out.println("Player " + (id + 1) + " - " + getButtonName(nesButton) + 
+                              " remapeado para " + KeyEvent.getKeyText(newKeyCode));
+            
+            // SINCRONIZAR COM O JOYSTICK
+            syncWithJoystick(nesButton, newKeyCode);
+        }
+    }
+
+    private void syncWithJoystick(int nesButton, int newKeyCode) {
+        if (joystickManager != null && joystickManager.isJoystickEnabled()) {
+            // Mapear botão NES para índice físico do joystick
+            int joyButton = getJoystickButtonForNESButton(nesButton);
+            if (joyButton != -1) {
+                joystickManager.setButtonMapping(joyButton, newKeyCode);
+            }
+        }
+    }
+
+
+    private int getJoystickButtonForNESButton(int nesButton) {
+        // Mapear botões NES para índices físicos do joystick
+        // Esta lógica precisa corresponder à detecção automática do JoystickManager
+        switch(nesButton) {
+            case KEY_A: return 0;      // Primeiro botão físico
+            case KEY_B: return 1;      // Segundo botão físico
+            case KEY_START: return 2;  // Terceiro botão físico  
+            case KEY_SELECT: return 3; // Quarto botão físico
+            // Os direcionais são tratados nos eixos, não em botões
+            default: return -1;
+        }
+    }
+
+     // Método para restaurar padrões também sincronizado
+    public void restoreDefaultMappings() {
+        int[] defaultKeys;
+        
+        if (id == 0) {
+            // Player 1 defaults
+            defaultKeys = new int[]{
+                KeyEvent.VK_Z,      // A
+                KeyEvent.VK_X,      // B
+                KeyEvent.VK_ENTER,  // Start
+                KeyEvent.VK_CONTROL,// Select
+                KeyEvent.VK_UP,     // Up
+                KeyEvent.VK_DOWN,   // Down
+                KeyEvent.VK_LEFT,   // Left
+                KeyEvent.VK_RIGHT   // Right
+            };
+        } else {
+            // Player 2 defaults  
+            defaultKeys = new int[]{
+                KeyEvent.VK_NUMPAD7, // A
+                KeyEvent.VK_NUMPAD9, // B
+                KeyEvent.VK_NUMPAD1, // Start
+                KeyEvent.VK_NUMPAD3, // Select
+                KeyEvent.VK_NUMPAD8, // Up
+                KeyEvent.VK_NUMPAD2, // Down
+                KeyEvent.VK_NUMPAD4, // Left
+                KeyEvent.VK_NUMPAD6  // Right
+            };
+        }
+        
+        int[] nesButtons = {KEY_A, KEY_B, KEY_START, KEY_SELECT, KEY_UP, KEY_DOWN, KEY_LEFT, KEY_RIGHT};
+        
+        for (int i = 0; i < nesButtons.length; i++) {
+            remapKey(nesButtons[i], defaultKeys[i]);
+        }
+    }
+
+
+
+     // Método para obter nome do botão NES
+    private String getButtonName(int nesButton) {
+        switch(nesButton) {
+            case KEY_A: return "A";
+            case KEY_B: return "B"; 
+            case KEY_START: return "Start";
+            case KEY_SELECT: return "Select";
+            case KEY_UP: return "Up";
+            case KEY_DOWN: return "Down";
+            case KEY_LEFT: return "Left";
+            case KEY_RIGHT: return "Right";
+            default: return "Unknown";
+        }
+    }
+
+     // Método para obter mapeamento atual
+    public int getCurrentMapping(int nesButton) {
+        return keyMapping[nesButton];
+    }
+
 
     public short getKeyState(int padKey) {
         return (short) (allKeysState[keyMapping[padKey]] ? 0x41 : 0x40);
