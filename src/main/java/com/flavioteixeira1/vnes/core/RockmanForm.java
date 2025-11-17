@@ -94,26 +94,26 @@ public class RockmanForm extends Applet implements Runnable, ActionListener {
             
             menuBar.add(fileMenu);
             menuBar.add(saveStateMenu);
-            // Menu do Joystick
-            JMenu joystickMenu = new JMenu("Joystick");
-            
-            // Item para status global dos joysticks
-            JMenuItem joystickStatusItem = new JMenuItem("Status dos Joysticks");
-            joystickStatusItem.addActionListener(e -> showJoystickStatus());
-            joystickMenu.add(joystickStatusItem);
+            // Menu Controles
+            JMenu controlMenu = new JMenu("Controles");
+             // Status dos controles
+            JMenuItem controlStatusItem = new JMenuItem("Status dos Controles");
+            controlStatusItem.addActionListener(e -> showControlStatus());
+            controlMenu.add(controlStatusItem);
             // Separador
-            joystickMenu.addSeparator();
+            controlMenu.addSeparator();
+            
              // Configuração individual por jogador
-            JMenuItem configJoystick1Item = new JMenuItem("Configurar Joystick - Player 1");
-            configJoystick1Item.addActionListener(e -> showJoystickConfig(0));
-            joystickMenu.add(configJoystick1Item);
+            JMenuItem configControl1Item = new JMenuItem("Configurar Player 1");
+            configControl1Item.addActionListener(e -> showInputConfig(0));
+            controlMenu.add(configControl1Item);
             
-            JMenuItem configJoystick2Item = new JMenuItem("Configurar Joystick - Player 2");
-            configJoystick2Item.addActionListener(e -> showJoystickConfig(1));
-            joystickMenu.add(configJoystick2Item);
+            JMenuItem configControl2Item = new JMenuItem("Configurar  Player 2");
+            configControl2Item.addActionListener(e -> showInputConfig(1));
+            controlMenu.add(configControl2Item);
             
             
-            menuBar.add(joystickMenu);
+            menuBar.add(controlMenu);
             parentFrame.setJMenuBar(menuBar);
             
             updateSaveStateMenu();
@@ -123,6 +123,24 @@ public class RockmanForm extends Applet implements Runnable, ActionListener {
     }
 
     
+    private void showInputConfig(int playerId) {
+        if (gui != null) {
+            try {
+                KbInputHandler kbHandler = (playerId == 0) ? 
+                    (KbInputHandler) gui.getJoy1() : (KbInputHandler) gui.getJoy2();
+                JoystickManager joyManager = gui.getJoystickManager(playerId);
+                
+                InputConfigDialog dialog = new InputConfigDialog(parentFrame, kbHandler, joyManager, playerId);
+                dialog.setVisible(true);
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(parentFrame,
+                    "Erro ao abrir configuração de controles: " + e.getMessage(),
+                    "Erro", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
+
 
     private void showJoystickConfig(int playerId) {
          if (gui != null) {
@@ -136,16 +154,39 @@ public class RockmanForm extends Applet implements Runnable, ActionListener {
     }
 
 
-    private void showJoystickStatus() {
-         String status = JoystickManager.getGlobalStatus();
+    private void showControlStatus() { 
+        StringBuilder status = new StringBuilder();
+        status.append("Status dos Controles\n\n");
         
-        status += "\n📋 Mapeamento Padrão:\n";
-        status += "Player 1: Setas (Direção) | Z (A) | X (B) | Enter (Start) | Ctrl (Select)\n";
-        status += "Player 2: Teclado Numérico (2,4,6,8) | 7 (A) | 9 (B) | 1 (Start) | 3 (Select)\n\n";
-        status += "Use 'Configurar Joystick' para alterar o mapeamento.";
+        // Status dos joysticks
+        status.append(JoystickManager.getGlobalStatus());
         
-        JOptionPane.showMessageDialog(parentFrame, status, 
-            "Status dos Joysticks", JOptionPane.INFORMATION_MESSAGE);
+        // Mapeamento atual do teclado
+        status.append("\n📋 Mapeamento Atual do Teclado:\n");
+        
+        if (gui != null && gui.getJoy1() instanceof KbInputHandler) {
+            KbInputHandler kb1 = (KbInputHandler) gui.getJoy1();
+            status.append("Player 1:\n");
+            status.append("  A: ").append(KeyEvent.getKeyText(kb1.getCurrentMapping(InputHandler.KEY_A))).append("\n");
+            status.append("  B: ").append(KeyEvent.getKeyText(kb1.getCurrentMapping(InputHandler.KEY_B))).append("\n");
+            status.append("  Start: ").append(KeyEvent.getKeyText(kb1.getCurrentMapping(InputHandler.KEY_START))).append("\n");
+            status.append("  Select: ").append(KeyEvent.getKeyText(kb1.getCurrentMapping(InputHandler.KEY_SELECT))).append("\n");
+        }
+        
+        if (gui != null && gui.getJoy2() instanceof KbInputHandler) {
+            KbInputHandler kb2 = (KbInputHandler) gui.getJoy2();
+            status.append("Player 2:\n");
+            status.append("  A: ").append(KeyEvent.getKeyText(kb2.getCurrentMapping(InputHandler.KEY_A))).append("\n");
+            status.append("  B: ").append(KeyEvent.getKeyText(kb2.getCurrentMapping(InputHandler.KEY_B))).append("\n");
+            status.append("  Start: ").append(KeyEvent.getKeyText(kb2.getCurrentMapping(InputHandler.KEY_START))).append("\n");
+            status.append("  Select: ").append(KeyEvent.getKeyText(kb2.getCurrentMapping(InputHandler.KEY_SELECT))).append("\n");
+        }
+        
+        status.append("\nUse 'Configurar Player' para alterar os controles.");
+        
+        JOptionPane.showMessageDialog(parentFrame, status.toString(), 
+            "Status dos Controles", JOptionPane.INFORMATION_MESSAGE);
+
     }
 
 
