@@ -499,18 +499,18 @@ public class JoystickManager {
     // Método estático para verificar status de ambos os jogadores
     public static String getGlobalStatus() {
         StringBuilder status = new StringBuilder();
-        status.append("🎮 Status dos Joysticks\n\n");
+        status.append(" Status dos Joysticks\n\n");
         
         if (instancePlayer1 != null && instancePlayer1.isJoystickEnabled()) {
-            status.append("Player 1: ✅ ").append(instancePlayer1.getJoystickName()).append("\n");
+            status.append("Player 1:  ").append(instancePlayer1.getJoystickName()).append("\n");
         } else {
-            status.append("Player 1: ❌ Não conectado\n");
+            status.append("Player 1:  Não conectado\n");
         }
         
         if (instancePlayer2 != null && instancePlayer2.isJoystickEnabled()) {
-            status.append("Player 2: ✅ ").append(instancePlayer2.getJoystickName()).append("\n");
+            status.append("Player 2:  ").append(instancePlayer2.getJoystickName()).append("\n");
         } else {
-            status.append("Player 2: ❌ Não conectado\n");
+            status.append("Player 2:  Não conectado\n");
         }
         
         return status.toString();
