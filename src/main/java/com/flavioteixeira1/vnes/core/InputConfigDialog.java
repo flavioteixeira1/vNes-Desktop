@@ -7,8 +7,13 @@ import java.awt.event.*;
 public class InputConfigDialog extends JDialog {
     private KbInputHandler kbHandler;
     private JoystickManager joyManager;
+    private static final int MODE_KEYBOARD_JOYSTICK = 0;
+    private static final int MODE_JOYSTICK_ONLY = 1;
     private int playerId;
     private JButton[] keyButtons;
+    private JComboBox<String> modeComboBox;
+    private int currentMode;
+
     
     public InputConfigDialog(Frame parent, KbInputHandler kbHandler, JoystickManager joyManager, int playerId) {
         super(parent, "Configurar Controles - Player " + (playerId + 1), true);
@@ -21,6 +26,27 @@ public class InputConfigDialog extends JDialog {
     private void initComponents() {
         setLayout(new BorderLayout(10, 10));
         
+         // Painel de seleção de modo
+        JPanel modePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        modePanel.setBorder(BorderFactory.createTitledBorder("Modo de Controle"));
+        
+        modeComboBox = new JComboBox<>(new String[]{
+            "Teclado + Joystick (Robot)", 
+            "Somente Joystick"
+        });
+        // Determinar modo atual baseado na configuração do joystick
+        currentMode = (joyManager != null && joyManager.isJoystickEnabled()) ? 
+            MODE_JOYSTICK_ONLY : MODE_KEYBOARD_JOYSTICK;
+        modeComboBox.setSelectedIndex(currentMode);
+        
+        modeComboBox.addActionListener(e -> {
+            currentMode = modeComboBox.getSelectedIndex();
+            updateUIForMode();
+        });
+        
+        modePanel.add(new JLabel("Modo:"));
+        modePanel.add(modeComboBox);
+        
         JTabbedPane tabbedPane = new JTabbedPane();
         tabbedPane.addTab("Teclado", createKeyboardConfigPanel());
         
@@ -28,6 +54,7 @@ public class InputConfigDialog extends JDialog {
             tabbedPane.addTab("Joystick", createJoystickConfigPanel());
         }
         
+        add(modePanel, BorderLayout.NORTH);
         add(tabbedPane, BorderLayout.CENTER);
         add(createButtonPanel(), BorderLayout.SOUTH);
         
@@ -35,6 +62,29 @@ public class InputConfigDialog extends JDialog {
         setLocationRelativeTo(getParent());
         setResizable(false);
     }
+
+    //Método para atualizar a UI baseado no modo
+    private void updateUIForMode() {
+            boolean joystickOnly = (currentMode == MODE_JOYSTICK_ONLY);
+            
+            // Atualizar a aba de teclado baseado no modo
+            Component keyboardTab = ((JTabbedPane)getContentPane().getComponent(1)).getComponentAt(0);
+            if (keyboardTab instanceof JPanel) {
+                enableComponents((JPanel)keyboardTab, !joystickOnly);
+            }
+    }
+
+    // Método auxiliar para habilitar/desabilitar componentes
+    private void enableComponents(JPanel panel, boolean enabled) {
+        panel.setEnabled(enabled);
+        for (Component comp : panel.getComponents()) {
+            comp.setEnabled(enabled);
+            if (comp instanceof JPanel) {
+                enableComponents((JPanel)comp, enabled);
+            }
+         }
+    }
+
     
     private JPanel createKeyboardConfigPanel() {
         JPanel panel = new JPanel(new GridLayout(8, 2, 5, 5));

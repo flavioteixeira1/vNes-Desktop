@@ -111,14 +111,44 @@ public class RockmanForm extends Applet implements Runnable, ActionListener {
             JMenuItem configControl2Item = new JMenuItem("Configurar  Player 2");
             configControl2Item.addActionListener(e -> showInputConfig(1));
             controlMenu.add(configControl2Item);
+             // Separador
+            controlMenu.addSeparator();
+            // Mapeamento avançado do joystick
+            JMenuItem advancedJoy1Item = new JMenuItem("Mapeamento Avançado - Player 1");
+            advancedJoy1Item.addActionListener(e -> showAdvancedJoystickConfig(0));
+            controlMenu.add(advancedJoy1Item);
             
-            
+            JMenuItem advancedJoy2Item = new JMenuItem("Mapeamento Avançado - Player 2");
+            advancedJoy2Item.addActionListener(e -> showAdvancedJoystickConfig(1));
+            controlMenu.add(advancedJoy2Item);
+
             menuBar.add(controlMenu);
             parentFrame.setJMenuBar(menuBar);
             
             updateSaveStateMenu();
+        }
+    }
 
-
+    private void showAdvancedJoystickConfig(int playerId) {
+        if (gui != null) {
+            try {
+                JoystickManager joyManager = gui.getJoystickManager(playerId);
+                
+                if (joyManager != null && joyManager.isJoystickEnabled()) {
+                    JoystickMappingDialog dialog = new JoystickMappingDialog(parentFrame, joyManager, playerId);
+                    dialog.setVisible(true);
+                } else {
+                    JOptionPane.showMessageDialog(parentFrame,
+                        "Nenhum joystick detectado para Player " + (playerId + 1) + "!\n\n" +
+                        "Conecte um joystick e reinicie o emulador.",
+                        "Joystick Não Encontrado",
+                        JOptionPane.WARNING_MESSAGE);
+                }
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(parentFrame,
+                    "Erro ao abrir configuração do joystick: " + e.getMessage(),
+                    "Erro", JOptionPane.ERROR_MESSAGE);
+            }
         }
     }
 
@@ -156,13 +186,27 @@ public class RockmanForm extends Applet implements Runnable, ActionListener {
 
     private void showControlStatus() { 
         StringBuilder status = new StringBuilder();
-        status.append("Status dos Controles\n\n");
-        
+        status.append("Status dos Controles\n\n");  
         // Status dos joysticks
         status.append(JoystickManager.getGlobalStatus());
-        
+        // Modos ativos
+        status.append("\n🎮 Modos Ativos:\n");
+        if (gui != null) {
+            for (int i = 0; i < 2; i++) {
+                JoystickManager jm = gui.getJoystickManager(i);
+                if (jm != null && jm.isJoystickEnabled()) {
+                    status.append("Player ").append(i + 1).append(": ")
+                        .append("Joystick Detectado")
+                        .append("\n");
+                } else {
+                    status.append("Player ").append(i + 1).append(": ")
+                        .append("Teclado")
+                        .append("\n");
+                }
+            }
+        }
         // Mapeamento atual do teclado
-        status.append("\n📋 Mapeamento Atual do Teclado:\n");
+        status.append("\n📋 Mapeamento Atual:\n");
         
         if (gui != null && gui.getJoy1() instanceof KbInputHandler) {
             KbInputHandler kb1 = (KbInputHandler) gui.getJoy1();
@@ -182,7 +226,8 @@ public class RockmanForm extends Applet implements Runnable, ActionListener {
             status.append("  Select: ").append(KeyEvent.getKeyText(kb2.getCurrentMapping(InputHandler.KEY_SELECT))).append("\n");
         }
         
-        status.append("\nUse 'Configurar Player' para alterar os controles.");
+        status.append("\n Use 'Configurar Player' para modos básicos.");
+        status.append("\n Use 'Mapeamento Avançado' para personalização completa.");
         
         JOptionPane.showMessageDialog(parentFrame, status.toString(), 
             "Status dos Controles", JOptionPane.INFORMATION_MESSAGE);

@@ -43,6 +43,11 @@ public class JoystickManager {
 
     // Nome do joystick para debug
     private String joystickName;
+
+    private Map<Integer, Integer> customButtonMapping;
+    private Map<Component.Identifier, Integer[]> customAxisMapping;
+    private boolean useCustomMapping = false;
+
     
     // Contador de instâncias para debug
     private static int instanceCount = 0;
@@ -58,6 +63,7 @@ public class JoystickManager {
             this.robot = new Robot();
             this.keyStates = new boolean[256];
             setupDefaultMapping();
+            setupCustomMapping(); 
             initJoystick(playerId);
             
             if (joystickEnabled.get()) {
@@ -68,6 +74,14 @@ public class JoystickManager {
         } catch (Exception e) {
             System.err.println("Erro ao inicializar joystick para Player " + (playerId + 1) + ": " + e.getMessage());
         }
+    }
+
+    private void setupCustomMapping() {
+    customButtonMapping = new HashMap<>();
+    customAxisMapping = new HashMap<>();
+    // Inicializar com os mesmos valores do mapeamento padrão
+    customButtonMapping.putAll(buttonToKeyMapping);
+    customAxisMapping.putAll(axisToKeyMapping);
     }
     
     // Métodos estáticos para obter instâncias específicas
@@ -328,28 +342,17 @@ public class JoystickManager {
         
         if (currentState != lastButtonStates[index]) {
             lastButtonStates[index] = currentState;
-
-             // Debug: mostrar todos os botões detectados
-            //if (currentState) {
-            //    System.out.println("Botão físico " + index + " pressionado - Nome: " + comp.getName() + 
-            //                    ", Identificador: " + comp.getIdentifier());
-            //}
-            
+            Map<Integer, Integer> activeMapping = useCustomMapping ? customButtonMapping : buttonToKeyMapping;   
             if (buttonToKeyMapping.containsKey(index)) {
                 int keyCode = buttonToKeyMapping.get(index);
                 dispatchKeyEvent(keyCode, currentState);
-                
-                // Debug apenas quando pressionado
-              //  if (currentState) {
-              //      System.out.println("Botão " + index + " pressionado -> " + getKeyName(keyCode));
-              //  }
             }
         }
     }
     
     private void processAnalogComponent(Component comp, float currentValue, int index) {
         Component.Identifier identifier = comp.getIdentifier();
-        
+        Map<Component.Identifier, Integer[]> activeAxisMapping = useCustomMapping ? customAxisMapping : axisToKeyMapping;
         if (axisToKeyMapping.containsKey(identifier)) {
             Integer[] keys = axisToKeyMapping.get(identifier);
             processAxis(currentValue, keys[0], keys[1]);
@@ -359,6 +362,32 @@ public class JoystickManager {
             
             lastAxisStates[index] = currentValue;
     }
+
+    public void setCustomButtonMapping(int buttonIndex, int keyCode) {
+    customButtonMapping.put(buttonIndex, keyCode);
+    System.out.println("Botão customizado " + buttonIndex + " mapeado para " + getKeyName(keyCode));
+    }
+
+    public void setCustomAxisMapping(Component.Identifier axis, int negativeKey, int positiveKey) {
+    customAxisMapping.put(axis, new Integer[]{negativeKey, positiveKey});
+    System.out.println("Eixo customizado " + axis + " mapeado para " + 
+                     getKeyName(negativeKey) + "/" + getKeyName(positiveKey));
+    }
+
+    public void setUseCustomMapping(boolean useCustom) {
+    this.useCustomMapping = useCustom;
+    System.out.println("Usando mapeamento " + (useCustom ? "customizado" : "padrão"));
+    }
+
+    public void setJoystickOnlyMode(boolean joystickOnly) {
+    // No modo somente joystick, não usamos o Robot
+        if (joystickOnly) {
+            pausePolling();
+        } else {
+            resumePolling();
+        }
+    }
+    
     
     private void processAxis(float currentValue, int negativeKey, int positiveKey) {
         boolean negativePressed = currentValue < -AXIS_THRESHOLD;
