@@ -10,7 +10,7 @@ import java.awt.event.*;
 public class HelpDialog extends JDialog {
     private JTextArea text;
     private JButton bt_ok;
-    MainWindow mainWindow;
+    JoystickMainWindow mainWindow;
    
 
     public HelpDialog(Frame owner) {

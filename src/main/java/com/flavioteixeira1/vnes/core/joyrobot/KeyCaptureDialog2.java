@@ -4,13 +4,13 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 
-public class KeyCaptureDialog extends JDialog {
+public class KeyCaptureDialog2 extends JDialog {
     private int capturedKey = -1;
     private boolean clearMapping = false;
-    ConfigDialog configDialog;
+    ConfigDialog2 configDialog;
     private String label;
 
-    private KeyCaptureDialog(ConfigDialog configDialog, String label) {
+    private KeyCaptureDialog2(ConfigDialog2 configDialog, String label) {
         super(configDialog, "Pressione uma tecla...", true);
         this.label = label;
         setLayout(new BorderLayout());
@@ -63,15 +63,15 @@ public class KeyCaptureDialog extends JDialog {
         requestFocusInWindow();
     }
 
-    public static int capture(ConfigDialog configDialog, String label) {
-        KeyCaptureDialog dlg = new KeyCaptureDialog(configDialog, label);
+    public static int capture(ConfigDialog2 configDialog, String label) {
+        KeyCaptureDialog2 dlg = new KeyCaptureDialog2(configDialog, label);
         dlg.setVisible(true);
         return dlg.capturedKey;
     }
     
     // Novo método para capturar com indicação de limpeza
-    public static CaptureResult captureWithClear(ConfigDialog configDialog, String label) {
-        KeyCaptureDialog dlg = new KeyCaptureDialog(configDialog, label);
+    public static CaptureResult captureWithClear(ConfigDialog2 configDialog, String label) {
+        KeyCaptureDialog2 dlg = new KeyCaptureDialog2(configDialog, label);
         dlg.setVisible(true);
         return new CaptureResult(dlg.capturedKey, dlg.clearMapping);
     }

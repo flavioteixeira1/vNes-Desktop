@@ -7,7 +7,7 @@ import java.util.*;
 import java.util.List;
 import net.java.games.input.Component;
 
-public class MainWindow extends JFrame {
+public class JoystickMainWindow extends JFrame {
     private JComboBox<String> perfilCombo;
     private JButton addPerfil, removePerfil, renomearPerfil;
     private JButton importBtn, exportBtn, saveBtn, revertBtn, helpBtn;
@@ -17,8 +17,8 @@ public class MainWindow extends JFrame {
     private javax.swing.Timer uiUpdateTimer;
     HelpDialog helpDialog;
 
-    public MainWindow() {
-        super("JKeyboard ");
+    public JoystickMainWindow() {
+        super("vNes Desktop - Joystick Config ");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(900, 650);
         setLocationRelativeTo(null);
@@ -434,8 +434,8 @@ public class MainWindow extends JFrame {
         private void configureButton(int buttonIndex) {
                 try {
                     String label = "Botão " + (buttonIndex + 1) + " - Player " + (playerId + 1);
-                    KeyCaptureDialog.CaptureResult result = KeyCaptureDialog.captureWithClear(
-                        ConfigDialog.getCurrentInstance(), label);
+                    KeyCaptureDialog2.CaptureResult result = KeyCaptureDialog2.captureWithClear(
+                        ConfigDialog2.getCurrentInstance(), label);
                     
                     if (result.isClear()) {
                         // Limpar o mapeamento deste botão
@@ -492,8 +492,8 @@ public class MainWindow extends JFrame {
                         
                         if (choice == 0 || choice == 1) { // Negativo ou Positivo
                             String label = axisNames[axisIndex] + " (" + directions[choice] + ") - Player " + (playerId + 1);
-                            KeyCaptureDialog.CaptureResult result = KeyCaptureDialog.captureWithClear(
-                                ConfigDialog.getCurrentInstance(), label);
+                            KeyCaptureDialog2.CaptureResult result = KeyCaptureDialog2.captureWithClear(
+                                ConfigDialog2.getCurrentInstance(), label);
                             
                             if (result.isClear()) {
                                 // Limpar mapeamento da direção específica
@@ -572,8 +572,8 @@ public class MainWindow extends JFrame {
                 String[] directions = {"Cima", "Baixo", "Esquerda", "Direita"};
                 String label = "POV " + directions[povIndex] + " - Player " + (playerId + 1);
                 
-                int keyCode = KeyCaptureDialog.capture(
-                    ConfigDialog.getCurrentInstance(), label);
+                int keyCode = KeyCaptureDialog2.capture(
+                    ConfigDialog2.getCurrentInstance(), label);
                 
                 if (keyCode > 0) {
                     // Configurar mapeamento POV (simplificado)

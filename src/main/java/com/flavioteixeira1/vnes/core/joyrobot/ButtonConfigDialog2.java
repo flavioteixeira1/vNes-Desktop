@@ -3,8 +3,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 
-public class ButtonConfigDialog extends JDialog {
-    public ButtonConfigDialog(Frame owner, int buttonNum) {
+public class ButtonConfigDialog2 extends JDialog {
+    public ButtonConfigDialog2(Frame owner, int buttonNum) {
         super(owner, "Set Button " + buttonNum, true);
         setLayout(new GridLayout(3, 2));
         JTextField txtKey = new JTextField(""); txtKey.setEditable(false);
