@@ -1,4 +1,4 @@
-package com.flavioteixeira1.vnes.core;
+package com.flavioteixeira1.vnes.core.joyrobot;
 
 import javax.swing.*;
 import java.awt.*;
@@ -7,12 +7,13 @@ import java.awt.event.*;
 /**
  * Help / About dialog moved to its own class (modal)
  */
-public class JoystickHelpDialog extends JDialog {
+public class HelpDialog extends JDialog {
     private JTextArea text;
     private JButton bt_ok;
-    JoystickConfigWindow joystickConfigwindow;
+    MainWindow mainWindow;
+   
 
-    public JoystickHelpDialog(Frame owner) {
+    public HelpDialog(Frame owner) {
         super(owner, "Jkeyboard - Sobre o programa...", true);
         initialize();
     }
@@ -52,7 +53,7 @@ public class JoystickHelpDialog extends JDialog {
         getContentPane().add(scrollpanel, BorderLayout.CENTER);
         getContentPane().add(bottom, BorderLayout.SOUTH);
 
-        setSize(450, 350);
+        setSize(490, 380);
         setResizable(false);
         setLocationRelativeTo(getOwner());
 

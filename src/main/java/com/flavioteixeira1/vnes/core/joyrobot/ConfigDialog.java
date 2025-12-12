@@ -1,4 +1,4 @@
-package com.flavioteixeira1.vnes.core;
+package com.flavioteixeira1.vnes.core.joyrobot;
 
 import javax.swing.*;
 import java.awt.*;
@@ -24,7 +24,7 @@ public class ConfigDialog extends JDialog {
             configBtns[i] = new JButton(txt);
             final int idx = i;
             configBtns[i].addActionListener(e -> {
-                int novo = KeyCapture.capture(this, "Botão " + (idx + 1));
+                int novo = KeyCaptureDialog.capture(this, "Botão " + (idx + 1));
                 if (novo > 0) {
                     jm.setButtonMapping(idx, novo);
                     configBtns[idx].setText(KeyEvent.getKeyText(novo));

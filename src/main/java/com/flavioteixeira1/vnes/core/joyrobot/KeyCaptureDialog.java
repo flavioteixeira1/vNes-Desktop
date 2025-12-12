@@ -1,22 +1,21 @@
-package com.flavioteixeira1.vnes.core;
+package com.flavioteixeira1.vnes.core.joyrobot;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 
-public class KeyCapture extends JDialog {
+public class KeyCaptureDialog extends JDialog {
     private int capturedKey = -1;
     private boolean clearMapping = false;
     ConfigDialog configDialog;
     private String label;
-    
 
-    private KeyCapture(ConfigDialog configDialog, String label) {
+    private KeyCaptureDialog(ConfigDialog configDialog, String label) {
         super(configDialog, "Pressione uma tecla...", true);
         this.label = label;
         setLayout(new BorderLayout());
         
-        // Atualizar instruções para incluir Ctrl+L
+        // Atualizando instruções para incluir Ctrl+L para limpeza
         JLabel instrucao = new JLabel(
             "<html><div style='text-align: center;'>" +
             "Pressione a tecla para " + label + "<br>" +
@@ -24,10 +23,6 @@ public class KeyCapture extends JDialog {
             "</div></html>", 
             JLabel.CENTER
         );
-        //Label de status
-        JLabel statusLabel = new JLabel("", JLabel.CENTER);
-        statusLabel.setForeground(Color.BLUE);
-
         instrucao.setFont(new Font("Arial", Font.PLAIN, 12));
         add(instrucao, BorderLayout.CENTER);
         
@@ -39,8 +34,6 @@ public class KeyCapture extends JDialog {
                 // Verificar se Ctrl+L foi pressionado
                 if (e.getKeyCode() == KeyEvent.VK_L && 
                     (e.isControlDown() || e.isMetaDown())) { // Meta para Mac
-                    statusLabel.setText("Ctrl pressionado... Pressione L para limpar");
-                    statusLabel.setForeground(Color.RED);
                     clearMapping = true;
                     capturedKey = -2; // Código especial para indicar limpeza
                     dispose();
@@ -71,19 +64,20 @@ public class KeyCapture extends JDialog {
     }
 
     public static int capture(ConfigDialog configDialog, String label) {
-        KeyCapture dlg = new KeyCapture(configDialog, label);
+        KeyCaptureDialog dlg = new KeyCaptureDialog(configDialog, label);
         dlg.setVisible(true);
         return dlg.capturedKey;
     }
     
     // Novo método para capturar com indicação de limpeza
     public static CaptureResult captureWithClear(ConfigDialog configDialog, String label) {
-        KeyCapture dlg = new KeyCapture(configDialog, label);
+        KeyCaptureDialog dlg = new KeyCaptureDialog(configDialog, label);
         dlg.setVisible(true);
         return new CaptureResult(dlg.capturedKey, dlg.clearMapping);
     }
     
-    // Classe para retornar resultado da captura
+    // Classe interna para retornar resultado da captura - 
+    // tem necessidade de ficar em arquivo próprio ? Ficaria mais organizado ?
     public static class CaptureResult {
         public final int keyCode;
         public final boolean clearMapping;
@@ -102,4 +96,3 @@ public class KeyCapture extends JDialog {
         }
     }
 }
-
