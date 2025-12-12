@@ -3,8 +3,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 
-public class AxisConfigDialog extends JDialog {
-    public AxisConfigDialog(Frame owner, int axisNum) {
+public class AxisConfigDialog2 extends JDialog {
+    public AxisConfigDialog2(Frame owner, int axisNum) {
         super(owner, "Set Axis " + axisNum, true);
         setLayout(new GridLayout(4, 2));
         JCheckBox grad = new JCheckBox("Gradient");

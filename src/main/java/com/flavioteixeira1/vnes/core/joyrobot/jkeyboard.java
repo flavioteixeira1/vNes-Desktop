@@ -6,7 +6,7 @@ public class jkeyboard {
     public static void main(String[] args) {
         // Certifica que todo Swing roda na thread correta
         SwingUtilities.invokeLater(() -> {
-            MainWindow tela = new MainWindow();
+            JoystickMainWindow tela = new JoystickMainWindow();
             tela.setVisible(true);
         });
     }

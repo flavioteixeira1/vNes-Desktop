@@ -5,10 +5,10 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.Map;
 
-public class ConfigDialog extends JDialog {
-    private static ConfigDialog currentInstance;
+public class ConfigDialog2 extends JDialog {
+    private static ConfigDialog2 currentInstance;
 
-    public ConfigDialog(Frame owner, JoystickManager jm) {
+    public ConfigDialog2(Frame owner, JoystickManager jm) {
         super(owner, "Configurar mapeamento: " + jm.getJoystickName(), true);
         currentInstance = this;
 
@@ -24,7 +24,7 @@ public class ConfigDialog extends JDialog {
             configBtns[i] = new JButton(txt);
             final int idx = i;
             configBtns[i].addActionListener(e -> {
-                int novo = KeyCaptureDialog.capture(this, "Botão " + (idx + 1));
+                int novo = KeyCaptureDialog2.capture(this, "Botão " + (idx + 1));
                 if (novo > 0) {
                     jm.setButtonMapping(idx, novo);
                     configBtns[idx].setText(KeyEvent.getKeyText(novo));
@@ -44,7 +44,7 @@ public class ConfigDialog extends JDialog {
         setLocationRelativeTo(owner);
     }
     
-    public static ConfigDialog getCurrentInstance() {
+    public static ConfigDialog2 getCurrentInstance() {
         return currentInstance;
     }
     
