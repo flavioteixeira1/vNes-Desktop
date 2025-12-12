@@ -4,6 +4,8 @@ import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.prefs.Preferences;
+import java.util.List;
 
 import javax.swing.*;
 
@@ -40,6 +42,14 @@ public class RockmanForm extends Applet implements Runnable, ActionListener {
     private JMenuItem loadStateItem;
     private JMenuItem saveStateWithNameItem;
 
+    // Recent files
+    private JMenu recentMenu;
+    private final int MAX_RECENTS = 8;
+    private final Preferences prefs = Preferences.userNodeForPackage(RockmanRUN.class);
+    private final String PREF_KEY_PREFIX = "recent.";
+
+
+
 
     public void setParentFrame(JFrame frame) {
         this.parentFrame = frame;
@@ -53,8 +63,13 @@ public class RockmanForm extends Applet implements Runnable, ActionListener {
             fileMenu = new JMenu("File");
             loadRomItem = new JMenuItem("Load ROM");
             loadRomItem.addActionListener(this);
-            
+
+            recentMenu = new JMenu("Recentes");
+            rebuildRecentMenuItems();
+
             fileMenu.add(loadRomItem);
+            fileMenu.addSeparator();
+            fileMenu.add(recentMenu);
             menuBar.add(fileMenu);
             parentFrame.setJMenuBar(menuBar);
 
@@ -111,48 +126,124 @@ public class RockmanForm extends Applet implements Runnable, ActionListener {
             JMenuItem configControl2Item = new JMenuItem("Configurar  Player 2");
             configControl2Item.addActionListener(e -> showInputConfig(1));
             controlMenu.add(configControl2Item);
-             // Separador
-            controlMenu.addSeparator();
-            // Mapeamento avançado do joystick
-            JMenuItem advancedJoy1Item = new JMenuItem("Mapeamento Avançado - Player 1");
-            advancedJoy1Item.addActionListener(e -> showAdvancedJoystickConfig(0));
-            controlMenu.add(advancedJoy1Item);
             
-            JMenuItem advancedJoy2Item = new JMenuItem("Mapeamento Avançado - Player 2");
-            advancedJoy2Item.addActionListener(e -> showAdvancedJoystickConfig(1));
-            controlMenu.add(advancedJoy2Item);
-
+            
             menuBar.add(controlMenu);
             parentFrame.setJMenuBar(menuBar);
             
             updateSaveStateMenu();
+            
+            
+
         }
     }
 
-    private void showAdvancedJoystickConfig(int playerId) {
-        if (gui != null) {
-            try {
-                JoystickManager joyManager = gui.getJoystickManager(playerId);
-                
-                if (joyManager != null && joyManager.isJoystickEnabled()) {
-                    JoystickMappingDialog dialog = new JoystickMappingDialog(parentFrame, joyManager, playerId);
-                    dialog.setVisible(true);
-                } else {
-                    JOptionPane.showMessageDialog(parentFrame,
-                        "Nenhum joystick detectado para Player " + (playerId + 1) + "!\n\n" +
-                        "Conecte um joystick e reinicie o emulador.",
-                        "Joystick Não Encontrado",
-                        JOptionPane.WARNING_MESSAGE);
-                }
-            } catch (Exception e) {
-                JOptionPane.showMessageDialog(parentFrame,
-                    "Erro ao abrir configuração do joystick: " + e.getMessage(),
-                    "Erro", JOptionPane.ERROR_MESSAGE);
+  // Adds a path to recents (moves to top). 
+ private void addToRecents(String fullPath) {
+        if (fullPath == null || fullPath.trim().isEmpty()) {
+            return;
+        }
+        
+        // Verificar se o arquivo ainda existe
+        File file = new File(fullPath);
+        if (!file.exists()) {
+            return; // Não adicionar arquivos que não existem mais
+        }
+        
+        List<String> list = loadRecents();
+        list.remove(fullPath); // Remover duplicatas
+        list.add(0, fullPath); // Adicionar no início
+        
+        // Limitar ao número máximo
+        while (list.size() > MAX_RECENTS) {
+            list.remove(list.size() - 1);
+        }
+        
+        saveRecents(list);
+        rebuildRecentMenuItems(); // Atualizar o menu
+    }
+
+    private void saveRecents(List<String> list) {
+            // clear first
+            for (int i = 0; i < MAX_RECENTS; i++) prefs.remove(PREF_KEY_PREFIX + i);
+            // store
+            for (int i = 0; i < list.size() && i < MAX_RECENTS; i++) {
+            prefs.put(PREF_KEY_PREFIX + i, list.get(i));
             }
+            try {
+            prefs.flush();
+            } catch (Exception e) {}
+        }
+
+        private void rebuildRecentMenuItems() {
+        if (recentMenu == null) {
+            return; // Menu ainda não foi criado
+        }
+        
+        // Limpar todos os itens atuais
+        recentMenu.removeAll();
+        
+        List<String> recents = loadRecents();
+        
+        if (recents.isEmpty()) {
+            JMenuItem none = new JMenuItem("(nenhum)");
+            none.setEnabled(false);
+            recentMenu.add(none);
+        } else {
+            for (String path : recents) {
+                final String p = path;
+                File file = new File(path);
+                String name = file.getName();
+                
+                // Truncar nome se for muito longo
+                if (name.length() > 30) {
+                    name = name.substring(0, 27) + "...";
+                }
+                
+                JMenuItem recentItem = new JMenuItem(name);
+                recentItem.setToolTipText(path); // Mostrar caminho completo no tooltip
+                recentItem.addActionListener(e -> loadNewRom(p));
+                recentMenu.add(recentItem);
+            }
+            
+            recentMenu.addSeparator();
+            
+            // Item para limpar histórico
+            JMenuItem clear = new JMenuItem("Limpar lista de recentes");
+            clear.addActionListener(e -> {
+                saveRecents(new ArrayList<>());
+                rebuildRecentMenuItems();
+            });
+            recentMenu.add(clear);
+        }
+        
+        // Forçar atualização do menu
+        recentMenu.revalidate();
+        recentMenu.repaint();
+    }
+    
+
+     private List<String> loadRecents() {
+        List<String> list = new ArrayList<>();
+        for (int i = 0; i < MAX_RECENTS; i++) {
+        String v = prefs.get(PREF_KEY_PREFIX + i, null);
+        if (v != null && v.trim().length() > 0) list.add(v);
+        }
+        return list;
+    }
+
+    public void clearRecentMenu() {
+        if (recentMenu != null) {
+            recentMenu.removeAll();
+            JMenuItem none = new JMenuItem("(nenhum)");
+            none.setEnabled(false);
+            recentMenu.add(none);
+            recentMenu.revalidate();
+            recentMenu.repaint();
         }
     }
 
-    
+
     private void showInputConfig(int playerId) {
         if (gui != null) {
             try {
@@ -186,27 +277,13 @@ public class RockmanForm extends Applet implements Runnable, ActionListener {
 
     private void showControlStatus() { 
         StringBuilder status = new StringBuilder();
-        status.append("Status dos Controles\n\n");  
+        status.append("Status dos Controles\n\n");
+        
         // Status dos joysticks
         status.append(JoystickManager.getGlobalStatus());
-        // Modos ativos
-        status.append("\n🎮 Modos Ativos:\n");
-        if (gui != null) {
-            for (int i = 0; i < 2; i++) {
-                JoystickManager jm = gui.getJoystickManager(i);
-                if (jm != null && jm.isJoystickEnabled()) {
-                    status.append("Player ").append(i + 1).append(": ")
-                        .append("Joystick Detectado")
-                        .append("\n");
-                } else {
-                    status.append("Player ").append(i + 1).append(": ")
-                        .append("Teclado")
-                        .append("\n");
-                }
-            }
-        }
+        
         // Mapeamento atual do teclado
-        status.append("\n📋 Mapeamento Atual:\n");
+        status.append("\n📋 Mapeamento Atual do Teclado:\n");
         
         if (gui != null && gui.getJoy1() instanceof KbInputHandler) {
             KbInputHandler kb1 = (KbInputHandler) gui.getJoy1();
@@ -226,8 +303,7 @@ public class RockmanForm extends Applet implements Runnable, ActionListener {
             status.append("  Select: ").append(KeyEvent.getKeyText(kb2.getCurrentMapping(InputHandler.KEY_SELECT))).append("\n");
         }
         
-        status.append("\n Use 'Configurar Player' para modos básicos.");
-        status.append("\n Use 'Mapeamento Avançado' para personalização completa.");
+        status.append("\nUse 'Configurar Player' para alterar os controles.");
         
         JOptionPane.showMessageDialog(parentFrame, status.toString(), 
             "Status dos Controles", JOptionPane.INFORMATION_MESSAGE);
@@ -415,6 +491,10 @@ public class RockmanForm extends Applet implements Runnable, ActionListener {
 
     private void loadNewRom(String romPath) {
         System.out.println("RockmanForm.loadNewRom() - Iniciando carregamento de nova ROM");
+         if (romPath != null && !romPath.trim().isEmpty()) {
+            addToRecents(romPath);
+            }
+
         // Pausar joystick antes de começar
         if (JoystickManager.isInitializedForPlayer(0)) {
                 JoystickManager.getInstanceForPlayer(0).pausePolling();}
@@ -541,6 +621,12 @@ public class RockmanForm extends Applet implements Runnable, ActionListener {
     gui.init(false);
     // Obter referência do NES
     jogo = gui.getNES();
+    // Carregar menu de recentes após GUI inicializada
+    if (parentFrame != null) {
+        SwingUtilities.invokeLater(() -> {
+            rebuildRecentMenuItems();
+        });
+    }
     // Configurar globais
     Globals.appletMode = true;
     Globals.memoryFlushValue = 0x00;
