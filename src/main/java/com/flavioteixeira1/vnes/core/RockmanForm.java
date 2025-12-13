@@ -49,8 +49,6 @@ public class RockmanForm extends Applet implements Runnable, ActionListener {
     private final String PREF_KEY_PREFIX = "recent.";
 
 
-
-
     public void setParentFrame(JFrame frame) {
         this.parentFrame = frame;
         createMenu();
@@ -126,7 +124,10 @@ public class RockmanForm extends Applet implements Runnable, ActionListener {
             JMenuItem configControl2Item = new JMenuItem("Configurar  Player 2");
             configControl2Item.addActionListener(e -> showInputConfig(1));
             controlMenu.add(configControl2Item);
-            
+            //Tela de configuração geral dos Joysticks
+            JMenuItem joyConfig = new JMenuItem("Configuração Geral");
+            joyConfig.addActionListener(e -> showJoystickConfigWindow());
+            controlMenu.add(joyConfig);
             
             menuBar.add(controlMenu);
             parentFrame.setJMenuBar(menuBar);
@@ -137,6 +138,13 @@ public class RockmanForm extends Applet implements Runnable, ActionListener {
 
         }
     }
+
+
+    //Método q mostra a janela de Configuração geral dos joystick (Jkeyboard)
+    private void showJoystickConfigWindow(){
+            JoystickMainWindow tela = new JoystickMainWindow();
+            tela.setVisible(true);
+    } 
 
   // Adds a path to recents (moves to top). 
  private void addToRecents(String fullPath) {
