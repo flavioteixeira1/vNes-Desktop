@@ -3,6 +3,7 @@ package com.flavioteixeira1.vnes.core;
 import java.awt.*;
 import javax.swing.*;
 import java.awt.event.*;
+import java.io.File;
 import java.util.*;
 import java.util.List;
 import net.java.games.input.Component;
@@ -15,6 +16,7 @@ public class JoystickMainWindow extends JFrame {
     private List<DevicePanel> devicePanels = new ArrayList<>();
     private JoystickManager joystickManager1, joystickManager2, joystickManager3, joystickManager4;
     private javax.swing.Timer uiUpdateTimer;
+    private JoystickProfileManager profileManager;
     HelpDialog helpDialog;
 
     public JoystickMainWindow() {
@@ -51,6 +53,13 @@ public class JoystickMainWindow extends JFrame {
 	    topBar.add(helpBtn);
 	
         add(topBar, BorderLayout.NORTH);
+
+        // Initialize profile manager
+        profileManager = JoystickProfileManager.getInstance();
+        // Configure profile 
+        updateProfileComboBox();
+        // Configure action profile buttons
+        configureProfileActions();
 
         // --- Joystick Tabs ---
         joystickTabs = new JTabbedPane();
@@ -216,6 +225,317 @@ public class JoystickMainWindow extends JFrame {
             panel.add(infoLabel, BorderLayout.NORTH);
         }        
         return panel;
+    }
+
+
+    private void configureProfileActions() {
+            // Add new profile
+            addPerfil.addActionListener(e -> {
+                String nome = JOptionPane.showInputDialog(this, 
+                    "Nome do novo perfil:", 
+                    "Novo Perfil", 
+                    JOptionPane.QUESTION_MESSAGE);
+                
+                if (nome != null && !nome.trim().isEmpty()) {
+                    String descricao = JOptionPane.showInputDialog(this,
+                        "Descrição do perfil:",
+                        "Descrição",
+                        JOptionPane.QUESTION_MESSAGE);
+                    
+                    if (descricao == null) descricao = "";
+                    
+                    if (profileManager.createNewProfile(nome.trim(), descricao)) {
+                        updateProfileComboBox();
+                        perfilCombo.setSelectedItem(nome);
+                        JOptionPane.showMessageDialog(this,
+                            "Perfil criado com sucesso!",
+                            "Sucesso",
+                            JOptionPane.INFORMATION_MESSAGE);
+                    } else {
+                        JOptionPane.showMessageDialog(this,
+                            "Erro: Já existe um perfil com este nome.",
+                            "Erro",
+                            JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+            });
+            
+            // Remove profile
+            removePerfil.addActionListener(e -> {
+                String perfilAtual = (String) perfilCombo.getSelectedItem();
+                if (perfilAtual == null || perfilAtual.equals("VNES")) {
+                    JOptionPane.showMessageDialog(this,
+                        "Não é possível remover o perfil padrão VNES.",
+                        "Aviso",
+                        JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+                
+                int confirm = JOptionPane.showConfirmDialog(this,
+                    "Deseja realmente remover o perfil '" + perfilAtual + "'?",
+                    "Confirmar Remoção",
+                    JOptionPane.YES_NO_OPTION);
+                
+                if (confirm == JOptionPane.YES_OPTION) {
+                    if (profileManager.deleteProfile(perfilAtual)) {
+                        updateProfileComboBox();
+                        JOptionPane.showMessageDialog(this,
+                            "Perfil removido com sucesso!",
+                            "Sucesso",
+                            JOptionPane.INFORMATION_MESSAGE);
+                    }
+                }
+            });
+            
+            // Rename profile
+            renomearPerfil.addActionListener(e -> {
+                String perfilAtual = (String) perfilCombo.getSelectedItem();
+                if (perfilAtual == null) return;
+                
+                String novoNome = JOptionPane.showInputDialog(this,
+                    "Novo nome para o perfil '" + perfilAtual + "':",
+                    "Renomear Perfil",
+                    JOptionPane.QUESTION_MESSAGE);
+                
+                if (novoNome != null && !novoNome.trim().isEmpty() && !novoNome.equals(perfilAtual)) {
+                    if (profileManager.renameProfile(perfilAtual, novoNome.trim())) {
+                        updateProfileComboBox();
+                        perfilCombo.setSelectedItem(novoNome);
+                        JOptionPane.showMessageDialog(this,
+                            "Perfil renomeado com sucesso!",
+                            "Sucesso",
+                            JOptionPane.INFORMATION_MESSAGE);
+                    } else {
+                        JOptionPane.showMessageDialog(this,
+                            "Erro ao renomear perfil. Nome já existe?",
+                            "Erro",
+                            JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+            });
+            
+            // Import profile
+            importBtn.addActionListener(e -> {
+                JFileChooser fileChooser = new JFileChooser();
+                fileChooser.setDialogTitle("Importar Perfil");
+                fileChooser.setFileFilter(new javax.swing.filechooser.FileFilter() {
+                    @Override
+                    public boolean accept(File f) {
+                        return f.isDirectory() || f.getName().toLowerCase().endsWith(".json");
+                    }
+                    
+                    @Override
+                    public String getDescription() {
+                        return "Arquivos JSON (*.json)";
+                    }
+                });
+                
+                if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+                    File file = fileChooser.getSelectedFile();
+                    if (profileManager.importProfile(file)) {
+                        updateProfileComboBox();
+                        JOptionPane.showMessageDialog(this,
+                            "Perfil importado com sucesso!",
+                            "Sucesso",
+                            JOptionPane.INFORMATION_MESSAGE);
+                    } else {
+                        JOptionPane.showMessageDialog(this,
+                            "Erro ao importar perfil. Verifique o formato do arquivo.",
+                            "Erro",
+                            JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+            });
+            
+            // Export profile
+            exportBtn.addActionListener(e -> {
+                String perfilAtual = (String) perfilCombo.getSelectedItem();
+                if (perfilAtual == null) return;
+                
+                JFileChooser fileChooser = new JFileChooser();
+                fileChooser.setDialogTitle("Exportar Perfil");
+                fileChooser.setSelectedFile(new File(perfilAtual + ".json"));
+                fileChooser.setFileFilter(new javax.swing.filechooser.FileFilter() {
+                    @Override
+                    public boolean accept(File f) {
+                        return f.isDirectory() || f.getName().toLowerCase().endsWith(".json");
+                    }
+                    
+                    @Override
+                    public String getDescription() {
+                        return "Arquivos JSON (*.json)";
+                    }
+                });
+                
+                if (fileChooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
+                    File file = fileChooser.getSelectedFile();
+                    if (profileManager.exportProfile(perfilAtual, file)) {
+                        JOptionPane.showMessageDialog(this,
+                            "Perfil exportado com sucesso!",
+                            "Sucesso",
+                            JOptionPane.INFORMATION_MESSAGE);
+                    } else {
+                        JOptionPane.showMessageDialog(this,
+                            "Erro ao exportar perfil.",
+                            "Erro",
+                            JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+            });
+            
+            // Save profile 
+            saveBtn.addActionListener(e -> {
+                String perfilAtual = (String) perfilCombo.getSelectedItem();
+                if (perfilAtual == null) return;
+                
+                // Save active manager state
+                JoystickManager[] managers = {
+                    joystickManager1, joystickManager2, joystickManager3, joystickManager4
+                };
+                
+                profileManager.saveCurrentStateToProfile(managers);
+                
+                // Perguntar se quer sobrescrever ou criar cópia
+                Object[] options = {"Sobrescrever", "Criar Cópia", "Cancelar"};
+                int escolha = JOptionPane.showOptionDialog(this,
+                    "Deseja sobrescrever o perfil atual ou criar uma cópia com as alterações?",
+                    "Salvar Perfil",
+                    JOptionPane.DEFAULT_OPTION,
+                    JOptionPane.QUESTION_MESSAGE,
+                    null,
+                    options,
+                    options[0]);
+                
+                if (escolha == 0) { // Sobrescrever
+                    JOptionPane.showMessageDialog(this,
+                        "Configurações salvas no perfil '" + perfilAtual + "'",
+                        "Salvo",
+                        JOptionPane.INFORMATION_MESSAGE);
+                } else if (escolha == 1) { // Criar cópia
+                    String nomeCopia = JOptionPane.showInputDialog(this,
+                        "Nome para a cópia do perfil:",
+                        "Criar Cópia",
+                        JOptionPane.QUESTION_MESSAGE);
+                    
+                    if (nomeCopia != null && !nomeCopia.trim().isEmpty()) {
+                        if (profileManager.createNewProfile(nomeCopia.trim(), 
+                            "Cópia de " + perfilAtual + " - " + new Date())) {
+                            
+                            // Salvar configurações atuais no novo perfil
+                            profileManager.setCurrentProfile(nomeCopia);
+                            profileManager.saveCurrentStateToProfile(managers);
+                            
+                            updateProfileComboBox();
+                            perfilCombo.setSelectedItem(nomeCopia);
+                            
+                            JOptionPane.showMessageDialog(this,
+                                "Cópia do perfil criada com sucesso!",
+                                "Sucesso",
+                                JOptionPane.INFORMATION_MESSAGE);
+                        }
+                    }
+                }
+            });
+            
+            // Reverter para configurações salvas
+            revertBtn.addActionListener(e -> {
+                String perfilAtual = (String) perfilCombo.getSelectedItem();
+                if (perfilAtual == null) return;
+                
+                int confirm = JOptionPane.showConfirmDialog(this,
+                    "Deseja reverter para as configurações salvas do perfil '" + perfilAtual + "'?\n" +
+                    "Todas as alterações não salvas serão perdidas.",
+                    "Reverter Alterações",
+                    JOptionPane.YES_NO_OPTION);
+                
+                if (confirm == JOptionPane.YES_OPTION) {
+                    JoystickManager[] managers = {
+                        joystickManager1, joystickManager2, joystickManager3, joystickManager4
+                    };
+                    
+                    if (profileManager.loadProfileToManagers(perfilAtual, managers)) {
+                        // Atualizar UI
+                        for (DevicePanel panel : devicePanels) {
+                            panel.updateButtonLabels();
+                        }
+                        
+                        JOptionPane.showMessageDialog(this,
+                            "Configurações revertidas para o perfil salvo.",
+                            "Sucesso",
+                            JOptionPane.INFORMATION_MESSAGE);
+                    }
+                }
+            });
+            
+            // Combo box selection changed
+            perfilCombo.addActionListener(e -> {
+                String perfilSelecionado = (String) perfilCombo.getSelectedItem();
+                if (perfilSelecionado != null && !perfilSelecionado.equals(profileManager.getCurrentProfileName())) {
+                    // Perguntar se quer salvar alterações não salvas
+                    int resposta = JOptionPane.showConfirmDialog(this,
+                        "Deseja salvar as alterações no perfil atual antes de mudar?",
+                        "Salvar Alterações",
+                        JOptionPane.YES_NO_CANCEL_OPTION);
+                    
+                    if (resposta == JOptionPane.YES_OPTION) {
+                        // Salvar antes de mudar
+                        JoystickManager[] managers = {
+                            joystickManager1, joystickManager2, joystickManager3, joystickManager4
+                        };
+                        profileManager.saveCurrentStateToProfile(managers);
+                        
+                        // Carregar novo perfil
+                        profileManager.loadProfileToManagers(perfilSelecionado, managers);
+                    } else if (resposta == JOptionPane.NO_OPTION) {
+                        // Carregar novo perfil sem salvar
+                        JoystickManager[] managers = {
+                            joystickManager1, joystickManager2, joystickManager3, joystickManager4
+                        };
+                        profileManager.loadProfileToManagers(perfilSelecionado, managers);
+                    } else {
+                        // Cancelar - voltar para item anterior
+                        perfilCombo.setSelectedItem(profileManager.getCurrentProfileName());
+                        return;
+                    }
+                    
+                    // Atualizar UI
+                    for (DevicePanel panel : devicePanels) {
+                        panel.updateButtonLabels();
+                    }
+                    
+                    // Mostrar informações do perfil
+                    String info = profileManager.getProfileInfo(perfilSelecionado);
+                    JOptionPane.showMessageDialog(this,
+                        info,
+                        "Informações do Perfil: " + perfilSelecionado,
+                        JOptionPane.INFORMATION_MESSAGE);
+                }
+            });
+    }
+
+    private void updateProfileComboBox() {
+         if (perfilCombo == null) {System.err.println("ERRO: perfilCombo é null!");
+            return; }
+        String selecionado = (String) perfilCombo.getSelectedItem();
+        perfilCombo.removeAllItems();
+        
+        if (profileManager == null) {System.err.println("ERRO: profileManager é null!");
+        return;}
+        List<String> perfis = profileManager.getProfileNames();
+        if (perfis == null || perfis.isEmpty()) {perfis = Arrays.asList("VNES");}
+        for (String perfil : perfis) {
+            perfilCombo.addItem(perfil);
+        }
+        String perfilParaSelecionar;
+        if (selecionado != null && perfis.contains(selecionado)) {
+            perfilParaSelecionar = selecionado;
+        } else {
+            // Obter perfil atual do manager ou usar "VNES" como fallback
+            perfilParaSelecionar = profileManager.getCurrentProfileName();
+            if (perfilParaSelecionar == null || !perfis.contains(perfilParaSelecionar)) {
+                perfilParaSelecionar = "VNES";}
+            }
+        perfilCombo.setSelectedItem(perfilParaSelecionar);
     }
     
      private void startUIUpdateTimer() {
