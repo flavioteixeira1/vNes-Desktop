@@ -19,11 +19,7 @@ public class JoystickMainWindow extends JFrame {
 
     public JoystickMainWindow() {
         super("vNes Desktop - Joystick Config ");
-<<<<<<< HEAD:src/main/java/com/flavioteixeira1/vnes/core/JoystickMainWindow.java
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-=======
         //setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
->>>>>>> joystick:src/main/java/com/flavioteixeira1/vnes/core/joyrobot/MainWindow.java
         setSize(900, 650);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
@@ -449,12 +445,6 @@ public class JoystickMainWindow extends JFrame {
         }
         
         private void configureButton(int buttonIndex) {
-<<<<<<< HEAD:src/main/java/com/flavioteixeira1/vnes/core/JoystickMainWindow.java
-                try {
-                    String label = "Botão " + (buttonIndex + 1) + " - Player " + (playerId + 1);
-                    KeyCaptureDialog2.CaptureResult result = KeyCaptureDialog2.captureWithClear(
-                        ConfigDialog2.getCurrentInstance(), label);
-=======
             try {
                 String label = "Botão " + (buttonIndex + 1) + " - Player " + (playerId + 1);
                 KeyCaptureDialog2.CaptureResult result = KeyCaptureDialog2.captureWithClear(
@@ -467,7 +457,6 @@ public class JoystickMainWindow extends JFrame {
                 if (result.isClear()) {
                     // Limpar o mapeamento deste botão
                      joystickManager.clearButtonMapping(buttonIndex);
->>>>>>> joystick:src/main/java/com/flavioteixeira1/vnes/core/joyrobot/MainWindow.java
                     
                     // Atualizar UI
                     SwingUtilities.invokeLater(() -> {

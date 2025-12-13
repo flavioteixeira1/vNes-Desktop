@@ -358,11 +358,7 @@ public class JoystickManager {
 
         
     
-<<<<<<< HEAD
-     public void stopPolling() {
-=======
     public void stopPolling() {
->>>>>>> joystick
         if (pollingThread != null) {
             pollingThread.interrupt();
         }
@@ -435,15 +431,12 @@ public class JoystickManager {
             Map<Integer, Integer> activeMapping = useCustomMapping ? customButtonMapping : buttonToKeyMapping;   
             if (activeMapping.containsKey(index)) {
                 int keyCode = activeMapping.get(index);
-<<<<<<< HEAD
-=======
                 if (keyCode != -1) {  // Só dispara se não for -1 (limpo)
                 dispatchKeyEvent(keyCode, currentState);
             } else {
                 // Se for -1, apenas atualiza o estado sem disparar tecla
                 System.out.println("Botão " + index + " ignorado (mapeamento limpo)");
             }
->>>>>>> joystick
                 dispatchKeyEvent(keyCode, currentState);
             }
         }
@@ -465,10 +458,6 @@ public class JoystickManager {
     public void setCustomButtonMapping(int buttonIndex, int keyCode) {
         customButtonMapping.put(buttonIndex, keyCode);
         if (keyCode == -1) {
-<<<<<<< HEAD
-            System.out.println("Mapeamento do botão " + buttonIndex + " foi limpo");
-        } else {
-=======
             customButtonMapping.put(buttonIndex, -1);
             System.out.println("Mapeamento do botão " + buttonIndex + " foi limpo");
              // Se estiver usando mapeamento customizado, também limpe do padrão
@@ -477,7 +466,6 @@ public class JoystickManager {
         }
         } else {
             customButtonMapping.put(buttonIndex, keyCode);
->>>>>>> joystick
             System.out.println("Botão customizado " + buttonIndex + " mapeado para " + getKeyName(keyCode));
         }
     }
@@ -764,13 +752,6 @@ public class JoystickManager {
 
         return status.toString();
         
-<<<<<<< HEAD
-    }
-
-     public int getKeyForButton(int buttonIdx) {
-        return buttonMap.getOrDefault(buttonIdx, -1);
-=======
->>>>>>> joystick
     }
 
      public int getKeyForButton(int buttonIdx) {

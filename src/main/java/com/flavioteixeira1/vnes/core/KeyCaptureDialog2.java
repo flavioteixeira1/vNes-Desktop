@@ -69,10 +69,6 @@ public class KeyCaptureDialog2 extends JDialog {
         return dlg.capturedKey;
     }
     
-<<<<<<< HEAD:src/main/java/com/flavioteixeira1/vnes/core/KeyCaptureDialog2.java
-    // Novo método para capturar com indicação de limpeza
-=======
->>>>>>> joystick:src/main/java/com/flavioteixeira1/vnes/core/joyrobot/KeyCaptureDialog.java
     public static CaptureResult captureWithClear(ConfigDialog2 configDialog, String label) {
         KeyCaptureDialog2 dlg = new KeyCaptureDialog2(configDialog, label);
         dlg.setVisible(true);

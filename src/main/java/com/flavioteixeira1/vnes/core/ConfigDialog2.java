@@ -6,10 +6,7 @@ import java.awt.event.*;
 
 public class ConfigDialog2 extends JDialog {
     private static ConfigDialog2 currentInstance;
-<<<<<<< HEAD:src/main/java/com/flavioteixeira1/vnes/core/ConfigDialog2.java
-=======
     private JoystickManager joystickManager;
->>>>>>> joystick:src/main/java/com/flavioteixeira1/vnes/core/joyrobot/ConfigDialog.java
 
     public ConfigDialog2(Frame owner, JoystickManager jm) {
         super(owner, "Configurar mapeamento: " + jm.getJoystickName(), true);
@@ -32,12 +29,6 @@ public class ConfigDialog2 extends JDialog {
             final int idx = i;
             
             configBtns[i].addActionListener(e -> {
-<<<<<<< HEAD:src/main/java/com/flavioteixeira1/vnes/core/ConfigDialog2.java
-                int novo = KeyCaptureDialog2.capture(this, "Botão " + (idx + 1));
-                if (novo > 0) {
-                    jm.setButtonMapping(idx, novo);
-                    configBtns[idx].setText(KeyEvent.getKeyText(novo));
-=======
                 String label = "Botão " + (idx + 1);
                 KeyCaptureDialog2.CaptureResult result = 
                     KeyCaptureDialog2.captureWithClear(this, label);
@@ -52,7 +43,6 @@ public class ConfigDialog2 extends JDialog {
                     jm.setCustomButtonMapping(idx, result.keyCode);
                     jm.setUseCustomMapping(true);
                     configBtns[idx].setText(KeyEvent.getKeyText(result.keyCode));
->>>>>>> joystick:src/main/java/com/flavioteixeira1/vnes/core/joyrobot/ConfigDialog.java
                 }
             });
             
