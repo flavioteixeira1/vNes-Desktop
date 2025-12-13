@@ -52,13 +52,13 @@ public class KeyCaptureDialog2 extends JDialog {
                 }
             }
             
-            // Também processar combinação via keyReleased para garantir captura
+            // Também keyReleased para garantir captura
             public void keyReleased(KeyEvent e) {
-                // Não é necessário processar aqui, o keyPressed já cuida
+                // keyPressed já cuida
             }
         });
         
-        // Adicionar também um KeyListener ao painel principal para garantir captura
+       
         setFocusable(true);
         requestFocusInWindow();
     }
@@ -69,7 +69,6 @@ public class KeyCaptureDialog2 extends JDialog {
         return dlg.capturedKey;
     }
     
-    // Novo método para capturar com indicação de limpeza
     public static CaptureResult captureWithClear(ConfigDialog2 configDialog, String label) {
         KeyCaptureDialog2 dlg = new KeyCaptureDialog2(configDialog, label);
         dlg.setVisible(true);

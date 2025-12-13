@@ -356,8 +356,9 @@ public class JoystickManager {
                          getKeyName(negativeKey) + "/" + getKeyName(positiveKey));
     }
 
+        
     
-     public void stopPolling() {
+    public void stopPolling() {
         if (pollingThread != null) {
             pollingThread.interrupt();
         }
@@ -430,6 +431,12 @@ public class JoystickManager {
             Map<Integer, Integer> activeMapping = useCustomMapping ? customButtonMapping : buttonToKeyMapping;   
             if (activeMapping.containsKey(index)) {
                 int keyCode = activeMapping.get(index);
+                if (keyCode != -1) {  // Só dispara se não for -1 (limpo)
+                dispatchKeyEvent(keyCode, currentState);
+            } else {
+                // Se for -1, apenas atualiza o estado sem disparar tecla
+                System.out.println("Botão " + index + " ignorado (mapeamento limpo)");
+            }
                 dispatchKeyEvent(keyCode, currentState);
             }
         }
@@ -451,8 +458,14 @@ public class JoystickManager {
     public void setCustomButtonMapping(int buttonIndex, int keyCode) {
         customButtonMapping.put(buttonIndex, keyCode);
         if (keyCode == -1) {
+            customButtonMapping.put(buttonIndex, -1);
             System.out.println("Mapeamento do botão " + buttonIndex + " foi limpo");
+             // Se estiver usando mapeamento customizado, também limpe do padrão
+        if (useCustomMapping && buttonToKeyMapping.containsKey(buttonIndex)) {
+            buttonToKeyMapping.remove(buttonIndex);
+        }
         } else {
+            customButtonMapping.put(buttonIndex, keyCode);
             System.out.println("Botão customizado " + buttonIndex + " mapeado para " + getKeyName(keyCode));
         }
     }
@@ -619,7 +632,7 @@ public class JoystickManager {
     }
     
     private void dispatchKeyEvent(int keyCode, boolean pressed) {
-        if (keyCode == -1) return;
+        if (keyCode == -1 || keyCode < 0) { return; }
         
         try {
             if (pressed) {
@@ -632,6 +645,26 @@ public class JoystickManager {
         } catch (Exception e) {
             System.err.println("Erro ao enviar tecla " + keyCode + ": " + e.getMessage());
         }
+    }
+
+    public String getMappingStatus() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Status do mapeamento - Player ").append(playerId + 1).append("\n");
+        sb.append("Usando custom: ").append(useCustomMapping).append("\n");
+        
+        sb.append("\nMapeamento padrão:\n");
+        for (Map.Entry<Integer, Integer> entry : buttonToKeyMapping.entrySet()) {
+            sb.append("  Botão ").append(entry.getKey()).append(" -> ")
+            .append(getKeyName(entry.getValue())).append("\n");
+        }
+        
+        sb.append("\nMapeamento customizado:\n");
+        for (Map.Entry<Integer, Integer> entry : customButtonMapping.entrySet()) {
+            sb.append("  Botão ").append(entry.getKey()).append(" -> ")
+            .append(getKeyName(entry.getValue())).append("\n");
+        }
+        
+        return sb.toString();
     }
     
     public void pausePolling() {
@@ -722,8 +755,29 @@ public class JoystickManager {
     }
 
      public int getKeyForButton(int buttonIdx) {
-        return buttonMap.getOrDefault(buttonIdx, -1);
+         return getMappedKeyForButton(buttonIdx);
     }
+
+
+    public void clearButtonMapping(int buttonIndex) {
+        // Limpa tanto no custom quanto no padrão
+        customButtonMapping.put(buttonIndex, -1);
+        
+        // IMPORTANTE: Quando limpa um botão, força o uso do mapeamento customizado
+        // para que a limpeza tenha efeito
+        if (!useCustomMapping) {
+            useCustomMapping = true;
+            System.out.println("Auto-ativando mapeamento customizado após limpeza");
+        }
+        
+        // Também remove do mapeamento padrão para garantir
+        if (buttonToKeyMapping.containsKey(buttonIndex)) {
+            buttonToKeyMapping.remove(buttonIndex);
+        }
+        
+        System.out.println("Botão " + buttonIndex + " completamente limpo");
+    }
+
 
     public void cleanup() {
         pausePolling();

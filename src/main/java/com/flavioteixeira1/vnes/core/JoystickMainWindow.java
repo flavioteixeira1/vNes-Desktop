@@ -19,7 +19,7 @@ public class JoystickMainWindow extends JFrame {
 
     public JoystickMainWindow() {
         super("vNes Desktop - Joystick Config ");
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        //setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(900, 650);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
@@ -133,6 +133,18 @@ public class JoystickMainWindow extends JFrame {
         // --- Bottom Bar ---
         JPanel bottomBar = new JPanel(new FlowLayout(FlowLayout.CENTER));
         JButton clearBtn = new JButton("Limpar");
+        JButton debugBtn = new JButton("Debug");
+            debugBtn.addActionListener(e -> {
+                System.out.println("\n=== DEBUG MAPPING ===");
+                System.out.println(joystickManager1.getMappingStatus());
+                System.out.println("====================\n");
+                
+                JTextArea textArea = new JTextArea(joystickManager1.getMappingStatus(), 20, 50);
+                JScrollPane scrollPane = new JScrollPane(textArea);
+                JOptionPane.showMessageDialog(this, scrollPane, "Debug Mapeamento", 
+                    JOptionPane.INFORMATION_MESSAGE);
+            });
+            bottomBar.add(debugBtn);
         JButton quickSetBtn = new JButton("Configuração Rápida");
         JButton toggleMappingBtn = new JButton("Usar Mapeamento Customizado");
         JButton closeBtn = new JButton("Fechar Diálogo");
@@ -140,8 +152,8 @@ public class JoystickMainWindow extends JFrame {
         
         toggleMappingBtn.addActionListener(e -> {
             boolean useCustom = !joystickManager1.getUseCustomMapping();
-            joystickManager1.setUseCustomMapping(useCustom);
-            joystickManager2.setUseCustomMapping(useCustom);
+            joystickManager1.setUseCustomMapping(false);
+            joystickManager2.setUseCustomMapping(false);
             joystickManager3.setUseCustomMapping(false);
             joystickManager4.setUseCustomMapping(false);
             toggleMappingBtn.setText(useCustom ? "Usar Mapeamento Padrão" : "Usar Mapeamento Customizado");
@@ -179,29 +191,30 @@ public class JoystickMainWindow extends JFrame {
         JPanel panel = new JPanel(new BorderLayout());
         panel.add(devicePanel, BorderLayout.CENTER);
         
-        // Adicionar informações do joystick
-        String joystickName = null;
+            JoystickManager manager = null;
         switch(playerId) {
             case 0:
-            joystickName = joystickManager1.getJoystickName();
+                manager = joystickManager1;
                 break;
             case 1:
-            joystickName = joystickManager2.getJoystickName();
+                manager = joystickManager2;
                 break;
             case 2:  
-            joystickName = joystickManager3.getJoystickName();
-                 break;
+                manager = joystickManager3;
+                break;
             case 3:
-            joystickName = joystickManager4.getJoystickName();  
+                manager = joystickManager4;
                 break;
             default:
-            joystickName = joystickManager1.getJoystickName();
-                break;    
+                manager = joystickManager1;
+                break;
         }
-        JLabel infoLabel = new JLabel("Joystick: " + joystickName);
-        infoLabel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
-        panel.add(infoLabel, BorderLayout.NORTH);
-        
+    
+        if (manager != null) {
+            JLabel infoLabel = new JLabel("Joystick: " + manager.getJoystickName());
+            infoLabel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+            panel.add(infoLabel, BorderLayout.NORTH);
+        }        
         return panel;
     }
     
@@ -432,40 +445,53 @@ public class JoystickMainWindow extends JFrame {
         }
         
         private void configureButton(int buttonIndex) {
-                try {
-                    String label = "Botão " + (buttonIndex + 1) + " - Player " + (playerId + 1);
-                    KeyCaptureDialog2.CaptureResult result = KeyCaptureDialog2.captureWithClear(
-                        ConfigDialog2.getCurrentInstance(), label);
+            try {
+                String label = "Botão " + (buttonIndex + 1) + " - Player " + (playerId + 1);
+                KeyCaptureDialog2.CaptureResult result = KeyCaptureDialog2.captureWithClear(
+                    ConfigDialog2.getCurrentInstance(), label);
+                
+                if (result.isCanceled()) {
+                    return; // Usuário pressionou ESC
+                }
+                
+                if (result.isClear()) {
+                    // Limpar o mapeamento deste botão
+                     joystickManager.clearButtonMapping(buttonIndex);
                     
-                    if (result.isClear()) {
-                        // Limpar o mapeamento deste botão
-                        joystickManager.setCustomButtonMapping(buttonIndex, -1); // -1 indica sem mapeamento
-                        updateButtonLabels();
-                        
-                        JOptionPane.showMessageDialog(this,
+                    // Atualizar UI
+                    SwingUtilities.invokeLater(() -> {
+                        buttonBtns[buttonIndex].setText("Botão " + (buttonIndex + 1) + ": [Não configurado]");
+                        JOptionPane.showMessageDialog(DevicePanel.this,
                             "Mapeamento do Botão " + (buttonIndex + 1) + " foi limpo.",
                             "Mapeamento Limpo",
                             JOptionPane.INFORMATION_MESSAGE);
-                    }
-                    else if (result.keyCode > 0) {
-                        joystickManager.setCustomButtonMapping(buttonIndex, result.keyCode);
-                        updateButtonLabels();
-                        joystickManager.setUseCustomMapping(true);
+                    });
+                }
+                else if (result.keyCode > 0) {
+                    // Configurar nova tecla
+                    joystickManager.setCustomButtonMapping(buttonIndex, result.keyCode);
+                    joystickManager.setUseCustomMapping(true);
+                    
+                    // Atualizar UI
+                    SwingUtilities.invokeLater(() -> {
+                        String keyName = KeyEvent.getKeyText(result.keyCode);
+                        buttonBtns[buttonIndex].setText("Botão " + (buttonIndex + 1) + ": " + keyName);
                         
-                        JOptionPane.showMessageDialog(this,
-                            "Botão " + (buttonIndex + 1) + " mapeado para: " + 
-                            KeyEvent.getKeyText(result.keyCode),
+                        JOptionPane.showMessageDialog(DevicePanel.this,
+                            "Botão " + (buttonIndex + 1) + " mapeado para: " + keyName,
                             "Mapeamento Configurado",
                             JOptionPane.INFORMATION_MESSAGE);
-                    }
-                } catch (Exception e) {
-                    System.err.println("Erro ao configurar botão: " + e.getMessage());
-                    JOptionPane.showMessageDialog(this,
-                        "Erro ao configurar botão: " + e.getMessage(),
-                        "Erro",
-                        JOptionPane.ERROR_MESSAGE);
+                    });
                 }
+            } catch (Exception e) {
+                System.err.println("Erro ao configurar botão: " + e.getMessage());
+                JOptionPane.showMessageDialog(this,
+                    "Erro ao configurar botão: " + e.getMessage(),
+                    "Erro",
+                    JOptionPane.ERROR_MESSAGE);
+            }
         }
+        
         
         private void configureAxis(int axisIndex) {
                 try {
@@ -631,6 +657,8 @@ public class JoystickMainWindow extends JFrame {
                 System.err.println("Erro ao atualizar UI state: " + e.getMessage());
             }
         }
+
+        
         
         public void updateButtonLabels() {
             try {
@@ -640,6 +668,10 @@ public class JoystickMainWindow extends JFrame {
                     int keyCode = joystickManager.getMappedKeyForButton(i);
                     String keyName = (keyCode > 0) ? KeyEvent.getKeyText(keyCode) : "[Não configurado]";
                     buttonBtns[i].setText("Botão " + (i+1) + ": " + keyName);
+                     // Verificar se o botão foi inicializado
+                    if (buttonBtns[i] != null) {
+                        buttonBtns[i].setText("Botão " + (i+1) + ": " + keyName);
+                    }
                 }
                 
                 // Atualizar labels dos eixos
