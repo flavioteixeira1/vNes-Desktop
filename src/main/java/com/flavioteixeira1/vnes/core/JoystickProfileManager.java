@@ -7,6 +7,8 @@ import java.awt.event.KeyEvent;
 import javax.swing.*;
 import org.json.*;
 
+import net.java.games.input.Component;
+
 public class JoystickProfileManager {
     private static JoystickProfileManager instance;
     private Map<String, JoystickProfile> profiles;
@@ -470,9 +472,17 @@ public class JoystickProfileManager {
                         profile.getPlayerButtonMapping(i).put(buttonIdx, keyCode);
                     }
                 }
-                
-                // Salvar mapeamento de eixos (simplificado - usar identificadores como string)
-                // Esta parte pode precisar de ajustes dependendo da implementação
+                //Salvar mapeamento dos eixos
+                profile.getPlayerAxisMapping(i).clear(); 
+                // Obter todos os eixos disponíveis e salvar seus mapeamentos
+                List<Component.Identifier> availableAxes = managers[i].getAvailableAxes();
+                for (Component.Identifier axisId : availableAxes) {
+                    Integer[] mappedKeys = managers[i].getMappedKeysForAxis(axisId);
+                    if (mappedKeys != null && (mappedKeys[0] != -1 || mappedKeys[1] != -1)) {
+                        // Usar o identificador como string para a chave
+                        profile.getPlayerAxisMapping(i).put(axisId.toString(), mappedKeys);
+                    }
+                }        
             }
         }
         
@@ -484,27 +494,47 @@ public class JoystickProfileManager {
         if (!profiles.containsKey(profileName)) {
             return false;
         }
-        
         JoystickProfile profile = profiles.get(profileName);
-        
         for (int i = 0; i < Math.min(managers.length, 4); i++) {
             if (managers[i] != null) {
                 // Carregar mapeamentos do perfil
+                // 1. Carregar botões
                 Map<Integer, Integer> buttonMapping = profile.getPlayerButtonMapping(i);
-                
                 // Limpar mapeamentos customizados atuais
                 managers[i].clearAllCustomMappings();
-                
-                // Aplicar mapeamentos do perfil
+                // Aplicar mapeamentos do perfil para botões
                 for (Map.Entry<Integer, Integer> entry : buttonMapping.entrySet()) {
                     managers[i].setCustomButtonMapping(entry.getKey(), entry.getValue());
                 }
+                // 2. Carregar eixos
+            Map<String, Integer[]> axisMapping = profile.getPlayerAxisMapping(i);
+            
+            // Obter lista de identificadores de eixos disponíveis
+            List<Component.Identifier> availableAxes = managers[i].getAvailableAxes();
+            Map<String, Component.Identifier> axisIdMap = new HashMap<>();
+            
+            // Criar mapa de identificadores por nome
+            for (Component.Identifier axisId : availableAxes) {
+                axisIdMap.put(axisId.toString(), axisId);
+            }
+            // Aplicar mapeamentos do perfil para eixos
+            for (Map.Entry<String, Integer[]> entry : axisMapping.entrySet()) {
+                String axisName = entry.getKey();
+                Integer[] keys = entry.getValue();
                 
+                // Verificar se este eixo existe no joystick atual
+                Component.Identifier axisId = axisIdMap.get(axisName);
+                if (axisId != null) {
+                    managers[i].setCustomAxisMapping(axisId, keys[0], keys[1]);
+                } else {
+                    // Log para debug
+                    System.out.println("Eixo " + axisName + " não encontrado no joystick Player " + (i+1));
+                }
+            }
                 // Ativar uso de mapeamento customizado
                 managers[i].setUseCustomMapping(true);
             }
         }
-        
         currentProfileName = profileName;
         return true;
     }

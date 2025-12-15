@@ -532,10 +532,10 @@ public class JoystickManager {
     }
     
     public List<Component.Identifier> getAvailableAxes() {
-        List<Component.Identifier> axes = new ArrayList<>();
-        if (components != null) {
-            for (Component comp : components) {
-                if (comp.isAnalog() && comp.getIdentifier() != Component.Identifier.Axis.POV) {
+    List<Component.Identifier> axes = new ArrayList<>();
+        if (joystick != null && joystick.getComponents() != null) {
+            for (Component comp : joystick.getComponents()) {
+                if (comp.isAnalog()) {
                     axes.add(comp.getIdentifier());
                 }
             }

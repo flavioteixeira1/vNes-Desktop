@@ -16,7 +16,7 @@ public class KbInputHandler implements KeyListener, InputHandler {
 
     public KbInputHandler(NES nes, int id) {
         this.nes = nes;
-        this.id = id; // 0 = Player 1, 1 = Player 2
+        this.id = id; // 0 = Player 1, 1 = Player 2, 2 = Player3 , 3 = Player 4
         allKeysState = new boolean[255];
         keyMapping = new int[InputHandler.NUM_KEYS];
         keystate = new boolean[0x100];
